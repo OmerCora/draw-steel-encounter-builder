@@ -6,31 +6,34 @@ A Foundry VTT module for the [Draw Steel](https://mcdmproductions.com) system th
 
 Encounter Builder gives Directors a dedicated two-panel interface for composing encounters. Browse monsters from any loaded compendium, drag them into your encounter, organize them into squads, and instantly see whether you're within budget — all without opening a spreadsheet.
 
-## Features
+## Overview
+
+<img width="1100" height="822" alt="Screenshot 2026-03-31 135950" src="https://github.com/user-attachments/assets/75b62682-7c96-4703-bf6a-0ea5e110ba70" />
+
 
 ### Encounter Math
-- **Automatic budget calculation** using the official formulas: Party ES = Hero ES × effective heroes, with Victories factored in (every 2 Victories = +1 effective hero)
+
+- **Automatic budget calculation** using the official formulas: Party ES = Hero ES × effective heroes, with Victories factored in
 - **Five difficulty tiers:** Trivial, Easy, Standard, Hard, and Extreme with computed EV budget ranges
 - **Live EV progress bar** with color-coded zones (orange for under-budget, green for on-budget, red overflow)
 - **Suggested monster level range** based on hero level and victories, with solo-specific caps
 - **Level danger warnings** — monsters above the recommended range are flagged with a ☠️ icon and red left border
 
 ### Monster Browser (Left Panel)
-- **Full compendium indexing** of all loaded NPC packs with lazy-loading
-- **Search** by name with debounced input
+- **Full compendium indexing** of all loaded NPC packs with search bar
 - **Filter by:** role (multi-select chips), organization (dropdown), level (all / suggested / specific 1–11), and source pack (multi-select chips)
 - **Sort** by EV (default) or name
-- **Infinite scroll pagination** — loads 50 at a time with DOM append (no re-render) for smooth performance
-- **Click to add** or **drag to canvas** to spawn tokens (auto-imports into an "Encounter Builder" folder, reuses already-imported actors)
+- **Click to add** or **drag to canvas** to spawn tokens
 - **Preview button** — hover over a monster's portrait to open its full sheet
 
 ### Selected Monsters (Right Panel)
 - **Drag from browser** directly into the selected list or into a specific squad group
 - **Increment/decrement** monster counts per entry (minions add/remove in groups of 4)
-- **Squad groups** — create named groups, drag monsters between them, and designate a squad captain (non-minion, non-mount)
-- **Preview on hover** — same sheet-preview overlay as the browser
+- **Squad groups** — create named groups, drag monsters between them, and designate a squad captain
 - **Drag to reorder** between groups, or drag out to ungrouped
 - **Drag to canvas** to place tokens from the selected list
+
+<img width="967" height="832" alt="Screenshot 2026-03-31 140402" src="https://github.com/user-attachments/assets/dd2b2fd0-e801-4df0-94a7-c80a3aa67e23" />
 
 ### Journal Export
 - **Save to Journal** creates a JournalEntry with a full encounter summary:
@@ -44,13 +47,6 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
 - Dragging a compendium monster to the canvas checks for an existing world actor (by `sourceId` flag) before importing
 - New imports go into an auto-created "Encounter Builder" Actor folder to keep the sidebar clean
 - Works from both the browser panel and the selected monsters panel
-
-### Quality of Life
-- **Persistent hero count** — number of heroes is saved per-client and restored on next open
-- **Default suggested level filter** — opens pre-filtered to monsters in the recommended range
-- **Stepper controls** for heroes (+1) and victories (+2 step, since only even values matter)
-- **Light and dark mode support** — all colors use theme-neutral patterns
-- **GM-only** — the sidebar button only appears for Directors
 
 ## Installation
 
