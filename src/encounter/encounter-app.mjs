@@ -87,6 +87,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   constructor(...args) {
     super(...args);
+    this.#heroLevel = game.settings.get(MODULE_ID, "heroLevel") ?? 1;
     this.#numHeroes = game.settings.get(MODULE_ID, "numHeroes") ?? 5;
   }
 
@@ -298,6 +299,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     // ── Input change listeners ────────────────────────────────────────────
     html.querySelector('[name="heroLevel"]')?.addEventListener("change", (e) => {
       this.#heroLevel = Number(e.target.value) || 1;
+      game.settings.set(MODULE_ID, "heroLevel", this.#heroLevel);
       this.#debouncedRender();
     });
     html.querySelector('[name="difficulty"]')?.addEventListener("change", (e) => {
@@ -534,9 +536,24 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   #moveMonsterToGroup(selectionId, targetGroupId) {
     const monster = this.#selectedMonsters.find((m) => m.id === selectionId);
     if (!monster) return;
-    monster.groupId = targetGroupId;
-    // If moving out of a group, clear captain status
-    if (!targetGroupId) monster.isSquadCaptain = false;
+
+    // For minions, move a set of 4 from the same UUID and source group
+    if (monster.organization === "minion") {
+      const sourceGroupId = monster.groupId;
+      if (sourceGroupId === targetGroupId) return; // same group, nothing to do
+      const batch = this.#selectedMonsters.filter(
+        (m) => m.uuid === monster.uuid && m.groupId === sourceGroupId
+      );
+      const toMove = batch.slice(0, 4);
+      for (const m of toMove) {
+        m.groupId = targetGroupId;
+        if (!targetGroupId) m.isSquadCaptain = false;
+      }
+    } else {
+      monster.groupId = targetGroupId;
+      // If moving out of a group, clear captain status
+      if (!targetGroupId) monster.isSquadCaptain = false;
+    }
     this.#debouncedRender();
   }
 

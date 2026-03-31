@@ -53,6 +53,10 @@ export async function createEncounterJournal(data) {
   html += `</tbody></table>`;
 
   // ── Monster list ────────────────────────────────────────────────────────
+  // Resolve compendium monsters to world actors (find-or-import) so journal
+  // links point to world actors instead of re-importing from compendium.
+  await resolveToWorldActors(selectedMonsters);
+
   html += `<h2>${game.i18n.localize("DSENCOUNTER.Journal.Creatures")}</h2>`;
 
   // Ungrouped monsters
@@ -191,4 +195,47 @@ function calcSelectedEV(selectedMonsters) {
     }
   }
   return total;
+}
+
+/**
+ * For each selected monster with a compendium UUID, find or import a world actor
+ * and update the monster entry's uuid to point to the world actor instead.
+ * This makes @UUID links in the journal open the world actor, not re-import.
+ */
+async function resolveToWorldActors(selectedMonsters) {
+  // Collect unique compendium UUIDs
+  const compendiumUuids = new Set();
+  for (const m of selectedMonsters) {
+    if (m.uuid.startsWith("Compendium.")) compendiumUuids.add(m.uuid);
+  }
+  if (compendiumUuids.size === 0) return;
+
+  // Find or create the Encounter Builder actor folder
+  const folderName = "Encounter Builder";
+  let folder = game.folders.find((f) => f.type === "Actor" && f.name === folderName);
+  if (!folder) {
+    folder = await Folder.create({ name: folderName, type: "Actor" });
+  }
+
+  // Build a map of compendium UUID → world actor UUID
+  const resolvedMap = new Map();
+  for (const compUuid of compendiumUuids) {
+    // Check if already imported
+    let actor = game.actors.find((a) => a.flags?.core?.sourceId === compUuid);
+    if (!actor) {
+      const doc = await fromUuid(compUuid);
+      if (!doc) continue;
+      const actorData = doc.toObject();
+      actorData.folder = folder.id;
+      foundry.utils.setProperty(actorData, "flags.core.sourceId", compUuid);
+      actor = await Actor.create(actorData);
+    }
+    resolvedMap.set(compUuid, actor.uuid);
+  }
+
+  // Update all selected monsters to use world actor UUIDs
+  for (const m of selectedMonsters) {
+    const worldUuid = resolvedMap.get(m.uuid);
+    if (worldUuid) m.uuid = worldUuid;
+  }
 }

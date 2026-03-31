@@ -25,6 +25,14 @@ Hooks.once("init", () => {
     default: 5,
   });
 
+  game.settings.register(MODULE_ID, "heroLevel", {
+    name: "Hero Level",
+    scope: "client",
+    config: false,
+    type: Number,
+    default: 1,
+  });
+
   // Load templates
   foundry.applications.handlebars.loadTemplates([
     `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
