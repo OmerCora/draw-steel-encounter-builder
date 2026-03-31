@@ -1,6 +1,6 @@
 # Draw Steel - Encounter Builder
 
-A Foundry VTT module for the [Draw Steel](https://mcdmproductions.com) system that provides Directors with an interactive tool to build balanced encounters using the official encounter building rules from *Draw Steel: Heroes*.
+A Foundry VTT module for the [Draw Steel](https://mcdmproductions.com) system that provides Directors with an interactive tool to build balanced encounters using the official encounter building rules from *Draw Steel: Monsters*.
 
 ## Summary
 
