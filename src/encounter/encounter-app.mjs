@@ -845,9 +845,15 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   static async #onDeployToScene() {
     if (this.#selectedMonsters.length === 0) return;
-    await deployEncounter({
-      selectedMonsters: this.#selectedMonsters,
-      groups: this.#groups,
-    });
+    this.minimize();
+    try {
+      const combat = await deployEncounter({
+        selectedMonsters: this.#selectedMonsters,
+        groups: this.#groups,
+      });
+      if (combat) await combat.activate();
+    } finally {
+      this.maximize();
+    }
   }
 }

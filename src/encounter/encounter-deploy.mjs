@@ -55,9 +55,10 @@ export async function deployEncounter(data) {
   const createdTokens = await canvas.scene.createEmbeddedDocuments("Token", tokenDataList);
 
   // ── Create Combat encounter ───────────────────────────────────────────
-  await createCombatEncounter(createdTokens, placementMeta, tokenDataList, groupBuckets, selectedMonsters);
+  const combat = await createCombatEncounter(createdTokens, placementMeta, tokenDataList, groupBuckets, selectedMonsters);
 
   ui.notifications.info(game.i18n.localize("DSENCOUNTER.Deploy.Success"));
+  return combat;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -324,7 +325,7 @@ function calculatePlacements(groupBuckets, origin, gs) {
  */
 async function createCombatEncounter(createdTokens, placementMeta, tokenDataList, groupBuckets, selectedMonsters) {
   // Create a fresh combat
-  const combat = await Combat.create({ scene: canvas.scene.id, active: true });
+  const combat = await Combat.create({ scene: canvas.scene.id });
 
   // Add all tokens as combatants
   const combatantData = createdTokens.map((token) => ({
@@ -401,4 +402,6 @@ async function createCombatEncounter(createdTokens, placementMeta, tokenDataList
       }
     }
   }
+
+  return combat;
 }
