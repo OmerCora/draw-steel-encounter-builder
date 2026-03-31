@@ -95,11 +95,18 @@ async function getOrCreateEncounterFolder() {
   return folder;
 }
 
-Hooks.on("dropCanvasData", async (canvas, data) => {
+Hooks.on("dropCanvasData", (canvas, data) => {
   if (!_systemValid) return true;
   if (data.type !== "Actor" || !data.dsencounter) return true;
   if (!data.uuid?.startsWith("Compendium.")) return true;
 
+  // Return false synchronously to prevent Foundry's default import,
+  // then handle the async import/spawn in the background.
+  _handleEncounterDrop(canvas, data);
+  return false;
+});
+
+async function _handleEncounterDrop(canvas, data) {
   // Check for an already-imported world actor from this compendium entry
   let actor = game.actors.find((a) => a.flags?.core?.sourceId === data.uuid);
 
@@ -107,12 +114,21 @@ Hooks.on("dropCanvasData", async (canvas, data) => {
     // Import into the Encounter Builder folder
     const folder = await getOrCreateEncounterFolder();
     const doc = await fromUuid(data.uuid);
-    if (!doc) return true;
-    actor = await Actor.create({ ...doc.toObject(), folder: folder.id });
+    if (!doc) return;
+    const actorData = doc.toObject();
+    actorData.folder = folder.id;
+    // Set sourceId flag so future drops reuse this actor
+    foundry.utils.setProperty(actorData, "flags.core.sourceId", data.uuid);
+    actor = await Actor.create(actorData);
   }
 
-  // Create token at the drop position
-  const td = await actor.getTokenDocument({ x: data.x, y: data.y });
+  // Snap to the center of the hovered grid cell, then offset to top-left (tokens position by top-left)
+  const center = canvas.grid.getSnappedPoint({x: data.x, y: data.y}, {mode: CONST.GRID_SNAPPING_MODES.CENTER});
+  const gs = canvas.grid.size;
+  const x = center.x - gs / 2;
+  const y = center.y - gs / 2;
+
+  // Create token at the snapped position
+  const td = await actor.getTokenDocument({x, y});
   await canvas.scene.createEmbeddedDocuments("Token", [td.toObject()]);
-  return false; // Prevent default (which would re-import)
-});
+}
