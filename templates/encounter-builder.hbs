@@ -6,12 +6,16 @@
   <section class="dsencounter-inputs">
     <div class="dsencounter-input-group">
       <label for="eb-heroLevel">{{localize "DSENCOUNTER.Input.HeroLevel"}}</label>
-      <input id="eb-heroLevel" type="number" name="heroLevel" value="{{heroLevel}}" min="1" max="10" step="1" />
+      <select id="eb-heroLevel" name="heroLevel">
+        {{#each levelOptions}}
+          <option value="{{this}}" {{#if (eq this ../heroLevel)}}selected{{/if}}>{{this}}</option>
+        {{/each}}
+      </select>
     </div>
 
     <div class="dsencounter-input-group">
       <label for="eb-numHeroes">{{localize "DSENCOUNTER.Input.NumHeroes"}}</label>
-      <input id="eb-numHeroes" type="number" name="numHeroes" value="{{numHeroes}}" min="1" max="8" step="1" />
+      <input id="eb-numHeroes" type="number" name="numHeroes" value="{{numHeroes}}" min="1" step="1" />
     </div>
 
     <div class="dsencounter-input-group">
@@ -44,6 +48,10 @@
           {{/if}}
         </strong>
       </span>
+      <span class="dsencounter-level-hint">
+        {{localize "DSENCOUNTER.Input.SuggestedLevel"}}: <strong>1–{{levelRange.max}}</strong>
+        ({{localize "DSENCOUNTER.Input.Solo"}}: 1–{{levelRange.soloMax}})
+      </span>
     </div>
   </section>
 
@@ -66,6 +74,35 @@
       <div class="dsencounter-filter-bar">
         <input type="text" name="monsterSearch" placeholder="{{localize "DSENCOUNTER.Browser.SearchPlaceholder"}}"
                class="dsencounter-search-input" />
+        <button type="button" class="dsencounter-search-clear {{#if searchText}}visible{{/if}}"
+                data-action="clearSearch" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      {{!-- Organization + Level + Sort dropdowns --}}
+      <div class="dsencounter-filter-row">
+        <select name="orgFilter" class="dsencounter-org-select">
+          {{#each orgOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../orgFilter)}}selected{{/if}}>
+              {{this.label}}
+            </option>
+          {{/each}}
+        </select>
+        <select name="levelFilter" class="dsencounter-level-select">
+          {{#each levelFilterOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../levelFilter)}}selected{{/if}}>
+              {{this.label}}
+            </option>
+          {{/each}}
+        </select>
+        <select name="sortOrder" class="dsencounter-sort-select">
+          {{#each sortOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../sortOrder)}}selected{{/if}}>
+              {{this.label}}
+            </option>
+          {{/each}}
+        </select>
       </div>
 
       {{!-- Role filter chips + input --}}
@@ -87,34 +124,51 @@
         </select>
       </div>
 
-      {{!-- Organization dropdown --}}
+      {{!-- Source filter chips + input --}}
       <div class="dsencounter-filter-row">
-        <select name="orgFilter" class="dsencounter-org-select">
-          {{#each orgOptions}}
-            <option value="{{this.value}}" {{#if (eq this.value ../orgFilter)}}selected{{/if}}>
+        <div class="dsencounter-role-chips">
+          {{#each sourceChips}}
+            <span class="dsencounter-chip dsencounter-chip-source">
               {{this.label}}
-            </option>
+              <button type="button" class="dsencounter-chip-x" data-action="removeSourceFilter"
+                      data-source="{{this.value}}">×</button>
+            </span>
           {{/each}}
-        </select>
+        </div>
+        {{#if availableSources.length}}
+          <select name="sourceSearch" class="dsencounter-role-select">
+            <option value="">{{localize "DSENCOUNTER.Filter.AddSource"}}</option>
+            {{#each availableSources}}
+              <option value="{{this.value}}">{{this.label}}</option>
+            {{/each}}
+          </select>
+        {{/if}}
       </div>
 
       {{!-- Monster list --}}
       <div class="dsencounter-browser-list">
         {{#each monsters}}
           <div class="dsencounter-monster-row {{#if this.levelWarning}}dsencounter-level-{{this.levelWarning}}{{/if}}"
-               data-action="addMonster" data-uuid="{{this.uuid}}">
+               draggable="true" data-action="addMonster" data-uuid="{{this.uuid}}">
             <div class="dsencounter-monster-left">
-              <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+              <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+                <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                        data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+                  <i class="fa-solid fa-book-open"></i>
+                </button>
+              </div>
               <span class="dsencounter-monster-name">
                 {{this.name}}
                 {{#if this.roleLabel}}
                   <span class="dsencounter-monster-role">({{this.roleLabel}})</span>
-                {{else}}
+                {{else if this.orgLabel}}
                   <span class="dsencounter-monster-role">({{this.orgLabel}})</span>
                 {{/if}}
               </span>
             </div>
             <div class="dsencounter-monster-right">
+              {{#if this.levelWarning}}<span class="dsencounter-danger-icon">☠️</span>{{/if}}
               <span class="dsencounter-monster-level">{{this.level}}</span>
               <span class="dsencounter-monster-ev">(EV {{this.ev}})</span>
             </div>
@@ -122,6 +176,11 @@
         {{else}}
           <p class="dsencounter-empty">{{localize "DSENCOUNTER.Browser.NoResults"}}</p>
         {{/each}}
+        {{#if isCapped}}
+          <div class="dsencounter-scroll-sentinel">
+            <p class="dsencounter-capped-msg">{{localize "DSENCOUNTER.Browser.ShowingResults" total=totalMatches limit=displayLimit}}</p>
+          </div>
+        {{/if}}
       </div>
     </div>
 
@@ -146,10 +205,17 @@
           {{!-- Rest is implicit (red on overflow) --}}
         </div>
         {{!-- Current EV marker --}}
+        {{#if totalEV}}
         <div class="dsencounter-progress-marker dsencounter-marker-{{progressBar.zone}}"
              style="left: {{progressBar.currentPct}}%">
           <span class="dsencounter-marker-label">{{totalEV}}</span>
         </div>
+        {{else}}
+        <div class="dsencounter-progress-marker dsencounter-marker-under"
+             style="left: 0%">
+          <span class="dsencounter-marker-label">0</span>
+        </div>
+        {{/if}}
         {{!-- Labels --}}
         <div class="dsencounter-progress-labels">
           <span style="left: 0%">0</span>
@@ -172,7 +238,13 @@
             <div class="dsencounter-selected-row" draggable="true"
                  data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
               <div class="dsencounter-monster-left">
-                <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+                  <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                  <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                          data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+                    <i class="fa-solid fa-book-open"></i>
+                  </button>
+                </div>
                 <span class="dsencounter-monster-name">
                   {{this.name}}
                   {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
@@ -217,7 +289,13 @@
               <div class="dsencounter-selected-row" draggable="true"
                    data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
                 <div class="dsencounter-monster-left">
-                  <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                  <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+                    <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                    <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                            data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+                      <i class="fa-solid fa-book-open"></i>
+                    </button>
+                  </div>
                   <span class="dsencounter-monster-name">
                     {{this.name}}
                     {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}

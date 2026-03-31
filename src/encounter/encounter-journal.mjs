@@ -77,16 +77,30 @@ export async function createEncounterJournal(data) {
   // ── Adjustment suggestions ──────────────────────────────────────────────
   html += `<h2>${game.i18n.localize("DSENCOUNTER.Journal.Adjustments")}</h2>`;
   html += `<ul>`;
+
+  const addHeroSpread = isFinite(adjustments.addHero.max)
+    ? adjustments.addHero.max - totalEV
+    : `${adjustments.addHero.min - totalEV}+`;
+  const addHeroBudgetStr = isFinite(adjustments.addHero.max)
+    ? `${adjustments.addHero.min} – ${adjustments.addHero.max}`
+    : `${adjustments.addHero.min}+`;
   html += `<li>${game.i18n.format("DSENCOUNTER.Journal.AddHero", {
     heroes: numHeroes + 1,
-    min: adjustments.addHero.min,
-    max: isFinite(adjustments.addHero.max) ? adjustments.addHero.max : `${adjustments.addHero.min}+`,
+    spread: addHeroSpread,
+    budget: addHeroBudgetStr,
   })}</li>`;
+
   if (adjustments.removeHero) {
+    const removeHeroSpread = isFinite(adjustments.removeHero.max)
+      ? totalEV - adjustments.removeHero.max
+      : `${totalEV - adjustments.removeHero.min}+`;
+    const removeHeroBudgetStr = isFinite(adjustments.removeHero.max)
+      ? `${adjustments.removeHero.min} – ${adjustments.removeHero.max}`
+      : `${adjustments.removeHero.min}+`;
     html += `<li>${game.i18n.format("DSENCOUNTER.Journal.RemoveHero", {
       heroes: numHeroes - 1,
-      min: adjustments.removeHero.min,
-      max: isFinite(adjustments.removeHero.max) ? adjustments.removeHero.max : `${adjustments.removeHero.min}+`,
+      spread: removeHeroSpread,
+      budget: removeHeroBudgetStr,
     })}</li>`;
   }
   html += `</ul>`;
@@ -94,8 +108,16 @@ export async function createEncounterJournal(data) {
   // ── Create the JournalEntry ─────────────────────────────────────────────
   const journalName = `${game.i18n.localize("DSENCOUNTER.Journal.EncounterPrefix")}: ${difficultyLabel} (EV ${totalEV})`;
 
+  // Find or create the "Encounter Builder" folder
+  const folderName = game.i18n.localize("DSENCOUNTER.Journal.FolderName");
+  let folder = game.folders.find((f) => f.type === "JournalEntry" && f.name === folderName);
+  if (!folder) {
+    folder = await Folder.create({ name: folderName, type: "JournalEntry" });
+  }
+
   const journal = await JournalEntry.create({
     name: journalName,
+    folder: folder.id,
     pages: [{
       name: game.i18n.localize("DSENCOUNTER.Journal.EncounterDetails"),
       type: "text",

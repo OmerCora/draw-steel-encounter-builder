@@ -36,7 +36,7 @@
   gap: 10px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border-light-2, #555);
-  background: var(--color-bg-option, #1a1a2e);
+  background: rgba(128, 128, 128, 0.08);
 }
 
 .dsencounter-input-group {
@@ -48,7 +48,8 @@
 .dsencounter-input-group label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-secondary, #aaa);
+  color: inherit;
+  opacity: 0.7;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -68,12 +69,19 @@
   align-items: center;
   margin-left: auto;
   font-size: 13px;
-  color: var(--color-text-light-highlight, #ddd);
+  color: inherit;
 }
 
 .dsencounter-es-label,
-.dsencounter-budget-label {
+.dsencounter-budget-label,
+.dsencounter-level-hint {
   white-space: nowrap;
+}
+
+.dsencounter-level-hint {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.7;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -113,26 +121,53 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-secondary, #aaa);
+  color: inherit;
+  opacity: 0.6;
   font-size: 13px;
   padding: 2px 6px;
   border-radius: 3px;
 }
 
 .dsencounter-refresh-btn:hover {
-  color: var(--color-text-light-highlight, #fff);
-  background: var(--color-bg-btn, #333);
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.2);
 }
 
 /* ── Filter bar ─────────────────────────────────────────────────────────── */
 
 .dsencounter-filter-bar {
   padding: 0 10px 4px;
+  position: relative;
 }
 
 .dsencounter-search-input {
   width: 100%;
   box-sizing: border-box;
+  padding-right: 28px;
+}
+
+.dsencounter-search-clear {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 14px;
+  padding: 0 4px;
+  line-height: 1;
+  display: none;
+}
+
+.dsencounter-search-clear.visible {
+  display: block;
+}
+
+.dsencounter-search-clear:hover {
+  opacity: 1;
 }
 
 .dsencounter-filter-row {
@@ -140,7 +175,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  padding: 0 10px 6px;
+  padding: 2px 10px 6px;
 }
 
 /* ── Role filter chips ──────────────────────────────────────────────────── */
@@ -159,8 +194,8 @@
   border: 1px solid var(--color-border-light-2, #666);
   border-radius: 12px;
   font-size: 11px;
-  color: var(--color-text-light-highlight, #ddd);
-  background: var(--color-bg-btn, #2a2a3e);
+  color: inherit;
+  background: rgba(128, 128, 128, 0.12);
   white-space: nowrap;
 }
 
@@ -168,7 +203,8 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-secondary, #aaa);
+  color: inherit;
+  opacity: 0.6;
   font-size: 13px;
   font-weight: bold;
   padding: 0;
@@ -180,9 +216,16 @@
 }
 
 .dsencounter-role-select,
-.dsencounter-org-select {
+.dsencounter-org-select,
+.dsencounter-level-select,
+.dsencounter-sort-select {
   flex: 1;
   min-width: 120px;
+}
+
+.dsencounter-chip-source {
+  background: rgba(60, 120, 200, 0.12);
+  border-color: var(--color-border-light-2, #4a6);
 }
 
 /* ── Browser monster list ───────────────────────────────────────────────── */
@@ -193,6 +236,14 @@
   padding: 0 4px;
 }
 
+.dsencounter-capped-msg {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-dark-secondary, #999);
+  padding: 6px 4px;
+  font-style: italic;
+}
+
 .dsencounter-monster-row {
   display: flex;
   align-items: center;
@@ -200,19 +251,20 @@
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 4px;
-  transition: background 0.15s;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36px;
 }
 
 .dsencounter-monster-row:hover {
-  background: var(--color-bg-btn, #333);
+  background: rgba(128, 128, 128, 0.15);
 }
 
 .dsencounter-monster-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(128, 128, 128, 0.04);
 }
 
 .dsencounter-monster-row:nth-child(even):hover {
-  background: var(--color-bg-btn, #333);
+  background: rgba(128, 128, 128, 0.15);
 }
 
 /* Level warning colors */
@@ -238,6 +290,35 @@
   border: 1px solid var(--color-border-light-2, #444);
 }
 
+.dsencounter-monster-img-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.dsencounter-preview-btn {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-light-highlight, #fff);
+  font-size: 12px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.dsencounter-monster-img-wrapper:hover .dsencounter-preview-btn {
+  display: flex;
+}
+
 .dsencounter-monster-name {
   white-space: nowrap;
   overflow: hidden;
@@ -246,7 +327,8 @@
 }
 
 .dsencounter-monster-role {
-  color: var(--color-text-secondary, #999);
+  color: inherit;
+  opacity: 0.6;
   font-size: 11px;
 }
 
@@ -261,17 +343,24 @@
 .dsencounter-monster-level {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-light-highlight, #ddd);
+  color: inherit;
 }
 
 .dsencounter-monster-ev {
   font-size: 11px;
-  color: var(--color-text-secondary, #999);
+  color: inherit;
+  opacity: 0.7;
+}
+
+.dsencounter-danger-icon {
+  font-size: 12px;
+  line-height: 1;
 }
 
 .dsencounter-empty {
   text-align: center;
-  color: var(--color-text-secondary, #888);
+  color: inherit;
+  opacity: 0.5;
   padding: 24px 8px;
   font-style: italic;
 }
@@ -290,6 +379,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px 4px;
+  margin-bottom: 8px;
 }
 
 .dsencounter-selected-header h3 {
@@ -299,7 +389,7 @@
 
 .dsencounter-ev-total {
   font-size: 13px;
-  color: var(--color-text-light-highlight, #ddd);
+  color: inherit;
 }
 
 /* ── EV Progress bar ────────────────────────────────────────────────────── */
@@ -307,6 +397,7 @@
 .dsencounter-progress-container {
   position: relative;
   padding: 4px 10px 20px;
+  margin-bottom: 4px;
 }
 
 .dsencounter-progress-bar {
@@ -320,7 +411,6 @@
 
 .dsencounter-progress-zone {
   height: 100%;
-  transition: width 0.3s ease;
 }
 
 .dsencounter-zone-under {
@@ -337,9 +427,7 @@
   top: 0;
   width: 3px;
   height: 22px;
-  transform: translateX(-50%);
   border-radius: 2px;
-  transition: left 0.3s ease;
 }
 
 .dsencounter-marker-under {
@@ -362,14 +450,15 @@
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
-  color: var(--color-text-light-highlight, #fff);
+  color: inherit;
 }
 
 .dsencounter-progress-labels {
   position: relative;
   height: 14px;
   font-size: 10px;
-  color: var(--color-text-secondary, #999);
+  color: inherit;
+  opacity: 0.6;
 }
 
 .dsencounter-progress-labels span {
@@ -392,7 +481,6 @@
   border-radius: 6px;
   padding: 4px;
   min-height: 36px;
-  transition: background 0.15s;
 }
 
 .dsencounter-group-header {
@@ -402,7 +490,7 @@
   padding: 2px 6px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-light-highlight, #ddd);
+  color: inherit;
   border-bottom: 1px solid var(--color-border-light-2, #333);
   margin-bottom: 2px;
 }
@@ -418,11 +506,10 @@
   padding: 3px 6px;
   cursor: grab;
   border-radius: 4px;
-  transition: background 0.15s;
 }
 
 .dsencounter-selected-row:hover {
-  background: var(--color-bg-btn, #333);
+  background: rgba(128, 128, 128, 0.15);
 }
 
 .dsencounter-selected-row.dsencounter-dragging {
@@ -452,7 +539,8 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-secondary, #aaa);
+  color: inherit;
+  opacity: 0.5;
   font-size: 12px;
   padding: 2px 4px;
   border-radius: 3px;
@@ -460,8 +548,8 @@
 }
 
 .dsencounter-btn-icon:hover {
-  color: var(--color-text-light-highlight, #fff);
-  background: var(--color-bg-btn, #444);
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.2);
 }
 
 .dsencounter-btn-danger:hover {
@@ -485,7 +573,8 @@
 
 .dsencounter-empty-group {
   text-align: center;
-  color: var(--color-text-secondary, #888);
+  color: inherit;
+  opacity: 0.5;
   font-size: 11px;
   font-style: italic;
   padding: 8px;
@@ -502,19 +591,19 @@
   width: 100%;
   padding: 6px;
   margin-top: 4px;
-  background: var(--color-bg-btn, #2a2a3e);
+  background: rgba(128, 128, 128, 0.06);
   border: 1px dashed var(--color-border-light-2, #555);
   border-radius: 6px;
   cursor: pointer;
-  color: var(--color-text-secondary, #aaa);
+  color: inherit;
+  opacity: 0.6;
   font-size: 12px;
-  transition: all 0.15s;
 }
 
 .dsencounter-create-group-btn:hover {
-  color: var(--color-text-light-highlight, #fff);
-  border-color: var(--color-text-light-highlight, #fff);
-  background: var(--color-bg-option, #333);
+  opacity: 1;
+  border-color: currentColor;
+  background: rgba(128, 128, 128, 0.15);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -527,7 +616,7 @@
   gap: 8px;
   padding: 8px 12px;
   border-top: 1px solid var(--color-border-light-2, #555);
-  background: var(--color-bg-option, #1a1a2e);
+  background: rgba(128, 128, 128, 0.08);
 }
 
 .dsencounter-save-btn {
@@ -539,14 +628,13 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 4px;
-  background: #2ecc71;
-  color: #fff;
-  border: none;
-  transition: background 0.15s;
+  background: rgba(46, 204, 113, 0.25);
+  color: inherit;
+  border: 1px solid rgba(46, 204, 113, 0.5);
 }
 
 .dsencounter-save-btn:hover:not(:disabled) {
-  background: #27ae60;
+  background: rgba(46, 204, 113, 0.4);
 }
 
 .dsencounter-save-btn:disabled {

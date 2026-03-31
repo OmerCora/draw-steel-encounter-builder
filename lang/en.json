@@ -9,7 +9,9 @@
       "AvgVictories": "Avg. Victories",
       "Difficulty": "Difficulty",
       "ES": "Encounter Strength",
-      "Budget": "Budget"
+      "Budget": "Budget",
+      "SuggestedLevel": "Suggested Monster Lv.",
+      "Solo": "Solo"
     },
 
     "Difficulty": {
@@ -24,12 +26,18 @@
       "Title": "Monster Browser",
       "SearchPlaceholder": "Search monsters…",
       "NoResults": "No monsters match the current filters.",
-      "Refresh": "Refresh monster index"
+      "Refresh": "Refresh monster index",
+      "ShowingResults": "Showing first {limit} of {total} results. Use filters to narrow down."
     },
 
     "Filter": {
       "AddRole": "— Add role filter —",
-      "AllOrganizations": "All Organizations"
+      "AddSource": "— Add source —",
+      "AllOrganizations": "All Organizations",
+      "AllLevels": "All Levels",
+      "SuggestedLevels": "Suggested Levels",
+      "SortByEV": "Sorted By EV",
+      "SortByName": "Sorted By Name"
     },
 
     "Selected": {
@@ -41,6 +49,7 @@
 
     "Action": {
       "Add": "Add",
+      "Preview": "Open sheet",
       "Decrement": "Remove one set",
       "Remove": "Remove all",
       "CreateGroup": "Create Group",
@@ -52,13 +61,14 @@
     "Group": "Group",
 
     "Source": {
-      "World": "World"
+      "World": "Game World"
     },
 
     "Journal": {
-      "EncounterSummary": "Encounter Summary",
+      "EncounterSummary": "Summary",
       "EncounterPrefix": "Encounter",
       "EncounterDetails": "Encounter Details",
+      "FolderName": "Encounter Builder",
       "TargetDifficulty": "Target Difficulty",
       "ActualDifficulty": "Actual Difficulty",
       "TotalEV": "Total EV",
@@ -72,8 +82,8 @@
       "SquadCaptain": "Squad Captain",
       "Level": "Lv.",
       "Adjustments": "Adjustment Suggestions",
-      "AddHero": "For {heroes} heroes at same difficulty: budget {min} – {max}",
-      "RemoveHero": "For {heroes} heroes at same difficulty: budget {min} – {max}",
+      "AddHero": "For {heroes} heroes: need {spread} more EV (budget {budget})",
+      "RemoveHero": "For {heroes} heroes: remove {spread} EV (budget {budget})",
       "Created": "Journal created: {name}"
     }
   }
