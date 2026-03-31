@@ -1,0 +1,80 @@
+{
+  "DSENCOUNTER": {
+    "WindowTitle": "Encounter Builder",
+    "SidebarButton": "Encounter Builder",
+
+    "Input": {
+      "HeroLevel": "Hero Level",
+      "NumHeroes": "Number of Heroes",
+      "AvgVictories": "Avg. Victories",
+      "Difficulty": "Difficulty",
+      "ES": "Encounter Strength",
+      "Budget": "Budget"
+    },
+
+    "Difficulty": {
+      "Trivial": "Trivial",
+      "Easy": "Easy",
+      "Standard": "Standard",
+      "Hard": "Hard",
+      "Extreme": "Extreme"
+    },
+
+    "Browser": {
+      "Title": "Monster Browser",
+      "SearchPlaceholder": "Search monsters…",
+      "NoResults": "No monsters match the current filters.",
+      "Refresh": "Refresh monster index"
+    },
+
+    "Filter": {
+      "AddRole": "— Add role filter —",
+      "AllOrganizations": "All Organizations"
+    },
+
+    "Selected": {
+      "Title": "Selected Monsters",
+      "TotalEV": "Total EV",
+      "Ungrouped": "Ungrouped",
+      "DropHere": "Drag monsters here"
+    },
+
+    "Action": {
+      "Add": "Add",
+      "Decrement": "Remove one set",
+      "Remove": "Remove all",
+      "CreateGroup": "Create Group",
+      "DeleteGroup": "Delete group",
+      "ToggleCaptain": "Toggle squad captain",
+      "SaveToJournal": "Save to Journal"
+    },
+
+    "Group": "Group",
+
+    "Source": {
+      "World": "World"
+    },
+
+    "Journal": {
+      "EncounterSummary": "Encounter Summary",
+      "EncounterPrefix": "Encounter",
+      "EncounterDetails": "Encounter Details",
+      "TargetDifficulty": "Target Difficulty",
+      "ActualDifficulty": "Actual Difficulty",
+      "TotalEV": "Total EV",
+      "BudgetRange": "Budget Range",
+      "PartyES": "Party ES",
+      "HeroLevel": "Hero Level",
+      "NumHeroes": "Number of Heroes",
+      "AvgVictories": "Avg. Victories",
+      "EffectiveHeroes": "Effective Heroes (incl. Victories)",
+      "Creatures": "Creatures",
+      "SquadCaptain": "Squad Captain",
+      "Level": "Lv.",
+      "Adjustments": "Adjustment Suggestions",
+      "AddHero": "For {heroes} heroes at same difficulty: budget {min} – {max}",
+      "RemoveHero": "For {heroes} heroes at same difficulty: budget {min} – {max}",
+      "Created": "Journal created: {name}"
+    }
+  }
+}

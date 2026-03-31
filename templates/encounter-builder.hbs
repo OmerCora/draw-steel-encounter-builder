@@ -1,0 +1,285 @@
+<form class="dsencounter-form" autocomplete="off">
+
+  {{!-- ═══════════════════════════════════════════════════════════════════════
+       TOP INPUT BAR
+  ═══════════════════════════════════════════════════════════════════════════ --}}
+  <section class="dsencounter-inputs">
+    <div class="dsencounter-input-group">
+      <label for="eb-heroLevel">{{localize "DSENCOUNTER.Input.HeroLevel"}}</label>
+      <input id="eb-heroLevel" type="number" name="heroLevel" value="{{heroLevel}}" min="1" max="10" step="1" />
+    </div>
+
+    <div class="dsencounter-input-group">
+      <label for="eb-numHeroes">{{localize "DSENCOUNTER.Input.NumHeroes"}}</label>
+      <input id="eb-numHeroes" type="number" name="numHeroes" value="{{numHeroes}}" min="1" max="8" step="1" />
+    </div>
+
+    <div class="dsencounter-input-group">
+      <label for="eb-avgVictories">{{localize "DSENCOUNTER.Input.AvgVictories"}}</label>
+      <input id="eb-avgVictories" type="number" name="avgVictories" value="{{avgVictories}}" min="0" max="16" step="1" />
+    </div>
+
+    <div class="dsencounter-input-group">
+      <label for="eb-difficulty">{{localize "DSENCOUNTER.Input.Difficulty"}}</label>
+      <select id="eb-difficulty" name="difficulty">
+        {{#each difficulties}}
+          <option value="{{this}}" {{#if (eq this ../difficulty)}}selected{{/if}}>
+            {{localize (concat "DSENCOUNTER.Difficulty." (capitalize this))}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="dsencounter-input-summary">
+      <span class="dsencounter-es-label">
+        {{localize "DSENCOUNTER.Input.ES"}}: <strong>{{partyES}}</strong>
+      </span>
+      <span class="dsencounter-budget-label">
+        {{localize "DSENCOUNTER.Input.Budget"}}:
+        <strong>
+          {{#if (eq budget.max Infinity)}}
+            {{budget.min}}+
+          {{else}}
+            {{budget.min}} – {{budget.max}}
+          {{/if}}
+        </strong>
+      </span>
+    </div>
+  </section>
+
+  {{!-- ═══════════════════════════════════════════════════════════════════════
+       MAIN CONTENT: Two columns
+  ═══════════════════════════════════════════════════════════════════════════ --}}
+  <section class="dsencounter-columns">
+
+    {{!-- ─── LEFT: Monster Browser ──────────────────────────────────────── --}}
+    <div class="dsencounter-browser">
+      <header class="dsencounter-browser-header">
+        <h3>{{localize "DSENCOUNTER.Browser.Title"}}</h3>
+        <button type="button" class="dsencounter-refresh-btn" data-action="refreshIndex"
+                data-tooltip="{{localize "DSENCOUNTER.Browser.Refresh"}}">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </header>
+
+      {{!-- Search bar --}}
+      <div class="dsencounter-filter-bar">
+        <input type="text" name="monsterSearch" placeholder="{{localize "DSENCOUNTER.Browser.SearchPlaceholder"}}"
+               class="dsencounter-search-input" />
+      </div>
+
+      {{!-- Role filter chips + input --}}
+      <div class="dsencounter-filter-row">
+        <div class="dsencounter-role-chips">
+          {{#each roleChips}}
+            <span class="dsencounter-chip">
+              {{this.label}}
+              <button type="button" class="dsencounter-chip-x" data-action="removeRoleFilter"
+                      data-role="{{this.value}}">×</button>
+            </span>
+          {{/each}}
+        </div>
+        <select name="roleSearch" class="dsencounter-role-select">
+          <option value="">{{localize "DSENCOUNTER.Filter.AddRole"}}</option>
+          {{#each availableRoles}}
+            <option value="{{this.value}}">{{this.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      {{!-- Organization dropdown --}}
+      <div class="dsencounter-filter-row">
+        <select name="orgFilter" class="dsencounter-org-select">
+          {{#each orgOptions}}
+            <option value="{{this.value}}" {{#if (eq this.value ../orgFilter)}}selected{{/if}}>
+              {{this.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      {{!-- Monster list --}}
+      <div class="dsencounter-browser-list">
+        {{#each monsters}}
+          <div class="dsencounter-monster-row {{#if this.levelWarning}}dsencounter-level-{{this.levelWarning}}{{/if}}"
+               data-action="addMonster" data-uuid="{{this.uuid}}">
+            <div class="dsencounter-monster-left">
+              <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+              <span class="dsencounter-monster-name">
+                {{this.name}}
+                {{#if this.roleLabel}}
+                  <span class="dsencounter-monster-role">({{this.roleLabel}})</span>
+                {{else}}
+                  <span class="dsencounter-monster-role">({{this.orgLabel}})</span>
+                {{/if}}
+              </span>
+            </div>
+            <div class="dsencounter-monster-right">
+              <span class="dsencounter-monster-level">{{this.level}}</span>
+              <span class="dsencounter-monster-ev">(EV {{this.ev}})</span>
+            </div>
+          </div>
+        {{else}}
+          <p class="dsencounter-empty">{{localize "DSENCOUNTER.Browser.NoResults"}}</p>
+        {{/each}}
+      </div>
+    </div>
+
+    {{!-- ─── RIGHT: Selected Monsters ───────────────────────────────────── --}}
+    <div class="dsencounter-selected">
+      <header class="dsencounter-selected-header">
+        <h3>{{localize "DSENCOUNTER.Selected.Title"}}</h3>
+        <span class="dsencounter-ev-total">
+          {{localize "DSENCOUNTER.Selected.TotalEV"}}: <strong>{{totalEV}}</strong>
+        </span>
+      </header>
+
+      {{!-- EV Progress bar --}}
+      <div class="dsencounter-progress-container">
+        <div class="dsencounter-progress-bar">
+          {{!-- Orange zone: 0 to min --}}
+          <div class="dsencounter-progress-zone dsencounter-zone-under"
+               style="width: {{progressBar.minPct}}%"></div>
+          {{!-- Green zone: min to max --}}
+          <div class="dsencounter-progress-zone dsencounter-zone-good"
+               style="width: {{math progressBar.maxPct '-' progressBar.minPct}}%"></div>
+          {{!-- Rest is implicit (red on overflow) --}}
+        </div>
+        {{!-- Current EV marker --}}
+        <div class="dsencounter-progress-marker dsencounter-marker-{{progressBar.zone}}"
+             style="left: {{progressBar.currentPct}}%">
+          <span class="dsencounter-marker-label">{{totalEV}}</span>
+        </div>
+        {{!-- Labels --}}
+        <div class="dsencounter-progress-labels">
+          <span style="left: 0%">0</span>
+          <span style="left: {{progressBar.minPct}}%">{{budget.min}}</span>
+          {{#unless progressBar.isInfinite}}
+            <span style="left: {{progressBar.maxPct}}%">{{budget.max}}</span>
+          {{/unless}}
+        </div>
+      </div>
+
+      {{!-- Selected monster list --}}
+      <div class="dsencounter-selected-list">
+
+        {{!-- Ungrouped section --}}
+        <div class="dsencounter-group-section dsencounter-drop-zone" data-group-id="">
+          <div class="dsencounter-group-header">
+            <span>{{localize "DSENCOUNTER.Selected.Ungrouped"}}</span>
+          </div>
+          {{#each ungrouped}}
+            <div class="dsencounter-selected-row" draggable="true"
+                 data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
+              <div class="dsencounter-monster-left">
+                <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                <span class="dsencounter-monster-name">
+                  {{this.name}}
+                  {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
+                </span>
+              </div>
+              <div class="dsencounter-monster-right">
+                <span class="dsencounter-monster-level">{{this.level}} (EV {{this.ev}})</span>
+                <div class="dsencounter-row-actions">
+                  <button type="button" class="dsencounter-btn-icon" data-action="incrementMonster"
+                          data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                  {{#if (gt this.count 1)}}
+                    <button type="button" class="dsencounter-btn-icon" data-action="decrementMonster"
+                            data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                      <i class="fa-solid fa-minus"></i>
+                    </button>
+                  {{/if}}
+                  <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
+                          data-action="removeMonster" data-uuid="{{this.uuid}}"
+                          data-tooltip="{{localize "DSENCOUNTER.Action.Remove"}}">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+
+        {{!-- Groups --}}
+        {{#each groups}}
+          <div class="dsencounter-group-section dsencounter-drop-zone" data-group-id="{{this.id}}">
+            <div class="dsencounter-group-header">
+              <span class="dsencounter-group-name">{{this.name}}</span>
+              <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
+                      data-action="deleteGroup" data-group-id="{{this.id}}"
+                      data-tooltip="{{localize "DSENCOUNTER.Action.DeleteGroup"}}">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+            {{#each this.monsters}}
+              <div class="dsencounter-selected-row" draggable="true"
+                   data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
+                <div class="dsencounter-monster-left">
+                  <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                  <span class="dsencounter-monster-name">
+                    {{this.name}}
+                    {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
+                    {{#if this.isSquadCaptain}}
+                      <span class="dsencounter-captain-badge">⚔️</span>
+                    {{/if}}
+                  </span>
+                </div>
+                <div class="dsencounter-monster-right">
+                  <span class="dsencounter-monster-level">{{this.level}} (EV {{this.ev}})</span>
+                  <div class="dsencounter-row-actions">
+                    <button type="button" class="dsencounter-btn-icon" data-action="incrementMonster"
+                            data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
+                      <i class="fa-solid fa-plus"></i>
+                    </button>
+                    {{#if (gt this.count 1)}}
+                      <button type="button" class="dsencounter-btn-icon" data-action="decrementMonster"
+                              data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                        <i class="fa-solid fa-minus"></i>
+                      </button>
+                    {{/if}}
+                    {{!-- Squad captain button: only for non-minion, non-mount in a group --}}
+                    {{#unless (eq this.organization "minion")}}
+                    {{#unless (eq this.role "mount")}}
+                      <button type="button" class="dsencounter-btn-icon dsencounter-btn-captain
+                              {{#if this.isSquadCaptain}}active{{/if}}"
+                              data-action="toggleCaptain" data-selection-id="{{this.ids.[0]}}"
+                              data-tooltip="{{localize "DSENCOUNTER.Action.ToggleCaptain"}}">
+                        <i class="fa-solid fa-crown"></i>
+                      </button>
+                    {{/unless}}
+                    {{/unless}}
+                    <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
+                            data-action="removeMonster" data-uuid="{{this.uuid}}"
+                            data-tooltip="{{localize "DSENCOUNTER.Action.Remove"}}">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {{else}}
+              <p class="dsencounter-empty-group">{{localize "DSENCOUNTER.Selected.DropHere"}}</p>
+            {{/each}}
+          </div>
+        {{/each}}
+
+        {{!-- Create Group button --}}
+        <button type="button" class="dsencounter-create-group-btn" data-action="createGroup">
+          <i class="fa-solid fa-plus"></i> {{localize "DSENCOUNTER.Action.CreateGroup"}}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  {{!-- ═══════════════════════════════════════════════════════════════════════
+       BOTTOM ACTION BAR
+  ═══════════════════════════════════════════════════════════════════════════ --}}
+  <section class="dsencounter-actions">
+    <button type="button" class="dsencounter-save-btn" data-action="saveToJournal"
+            {{#unless hasSelections}}disabled{{/unless}}>
+      <i class="fa-solid fa-book"></i> {{localize "DSENCOUNTER.Action.SaveToJournal"}}
+    </button>
+  </section>
+
+</form>

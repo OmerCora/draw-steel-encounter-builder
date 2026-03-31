@@ -1,0 +1,41 @@
+{
+  "id": "draw-steel-encounter-builder",
+  "title": "Draw Steel - Encounter Builder",
+  "description": "A helper for Gamemasters to build balanced encounters using the Draw Steel encounter building rules.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13.351"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "draw-steel",
+        "type": "system",
+        "compatibility": {
+          "minimum": "0.9.0",
+          "verified": "0.11.1"
+        }
+      }
+    ]
+  },
+  "authors": [
+    {
+      "name": "OmerCora",
+      "url": "https://www.coraomer.com"
+    }
+  ],
+  "esmodules": [
+    "src/module.mjs"
+  ],
+  "styles": [
+    "styles/encounter-builder.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ]
+}
