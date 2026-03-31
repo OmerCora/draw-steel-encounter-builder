@@ -732,21 +732,26 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     const isMinion = this.#selectedMonsters.find((m) => m.uuid === uuid)?.organization === "minion";
     const removeCount = isMinion ? 4 : 1;
 
-    // Only decrement if more than the minimum remain in that group context
     const inContext = this.#selectedMonsters.filter(
       (m) => m.uuid === uuid && m.groupId === targetGroupId
     );
-    if (inContext.length <= removeCount) return; // Can't go below 1 set — use remove instead
 
-    let removed = 0;
-    this.#selectedMonsters = this.#selectedMonsters.filter((m) => {
-      if (removed >= removeCount) return true;
-      if (m.uuid === uuid && m.groupId === targetGroupId) {
-        removed++;
-        return false;
-      }
-      return true;
-    });
+    // If at or below one set, remove all (same as trash)
+    if (inContext.length <= removeCount) {
+      this.#selectedMonsters = this.#selectedMonsters.filter(
+        (m) => !(m.uuid === uuid && m.groupId === targetGroupId)
+      );
+    } else {
+      let removed = 0;
+      this.#selectedMonsters = this.#selectedMonsters.filter((m) => {
+        if (removed >= removeCount) return true;
+        if (m.uuid === uuid && m.groupId === targetGroupId) {
+          removed++;
+          return false;
+        }
+        return true;
+      });
+    }
     this.#debouncedRender();
   }
 

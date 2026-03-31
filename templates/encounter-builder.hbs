@@ -264,16 +264,9 @@
                           data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
                     <i class="fa-solid fa-plus"></i>
                   </button>
-                  {{#if (gt this.count 1)}}
-                    <button type="button" class="dsencounter-btn-icon" data-action="decrementMonster"
-                            data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
-                      <i class="fa-solid fa-minus"></i>
-                    </button>
-                  {{/if}}
-                  <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
-                          data-action="removeMonster" data-uuid="{{this.uuid}}"
-                          data-tooltip="{{localize "DSENCOUNTER.Action.Remove"}}">
-                    <i class="fa-solid fa-trash"></i>
+                  <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger" data-action="decrementMonster"
+                          data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                    <i class="fa-solid fa-minus"></i>
                   </button>
                 </div>
               </div>
@@ -318,12 +311,10 @@
                             data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
                       <i class="fa-solid fa-plus"></i>
                     </button>
-                    {{#if (gt this.count 1)}}
-                      <button type="button" class="dsencounter-btn-icon" data-action="decrementMonster"
-                              data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
-                        <i class="fa-solid fa-minus"></i>
-                      </button>
-                    {{/if}}
+                    <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger" data-action="decrementMonster"
+                            data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                      <i class="fa-solid fa-minus"></i>
+                    </button>
                     {{!-- Squad captain button: only for non-minion, non-mount in a group --}}
                     {{#unless (eq this.organization "minion")}}
                     {{#unless (eq this.role "mount")}}
@@ -335,11 +326,6 @@
                       </button>
                     {{/unless}}
                     {{/unless}}
-                    <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
-                            data-action="removeMonster" data-uuid="{{this.uuid}}"
-                            data-tooltip="{{localize "DSENCOUNTER.Action.Remove"}}">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
                   </div>
                 </div>
               </div>
