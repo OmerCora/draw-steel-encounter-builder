@@ -8,6 +8,9 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
 
 ## Overview
 
+
+<img width="230" height="83" alt="Screenshot 2026-03-31 154440" src="https://github.com/user-attachments/assets/4519aa5b-960f-4877-a2b0-d1ac2d6fbb6d" />
+
 <img width="1101" height="820" alt="Screenshot 2026-03-31 175116" src="https://github.com/user-attachments/assets/45973040-b8a5-497a-a986-a3f860a09848" />
 
 ### Encounter Math
