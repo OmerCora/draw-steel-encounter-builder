@@ -229,11 +229,24 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
     // ── Source filter ─────────────────────────────────────────────────────
     const allSources = getSourceOptions(this.#monsterIndex);
-    // Default: select only world + system monsters compendium
+    const validSourceIds = new Set(allSources.map((s) => s.value));
+    // Load persisted source filters, falling back to defaults
     if (!this.#sourceFiltersInitialized && allSources.length > 0) {
       this.#sourceFiltersInitialized = true;
-      for (const s of allSources) {
-        if (s.isDefault) this.#sourceFilters.add(s.value);
+      const stored = game.settings.get(MODULE_ID, "sourceFilters");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          for (const id of parsed) {
+            if (validSourceIds.has(id)) this.#sourceFilters.add(id);
+          }
+        } catch { /* ignore corrupt data */ }
+      }
+      // If nothing was restored (first run or all persisted sources gone), use defaults
+      if (this.#sourceFilters.size === 0) {
+        for (const s of allSources) {
+          if (s.isDefault) this.#sourceFilters.add(s.value);
+        }
       }
     }
     const sourceChips = allSources.filter((s) => this.#sourceFilters.has(s.value));
@@ -352,6 +365,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         const value = e.target.value;
         if (value) {
           this.#sourceFilters.add(value);
+          game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
           e.target.value = "";
           this.#displayLimit = 50;
           this.#debouncedRender();
@@ -806,6 +820,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   static #onRemoveSourceFilter(_event, target) {
     this.#sourceFilters.delete(target.dataset.source);
+    game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
     this.#displayLimit = 50;
     this.#debouncedRender();
   }

@@ -33,6 +33,14 @@ Hooks.once("init", () => {
     default: 1,
   });
 
+  game.settings.register(MODULE_ID, "sourceFilters", {
+    name: "Source Filters",
+    scope: "client",
+    config: false,
+    type: String,
+    default: "",
+  });
+
   // Load templates
   foundry.applications.handlebars.loadTemplates([
     `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
@@ -41,6 +49,7 @@ Hooks.once("init", () => {
   // ── Handlebars helpers ───────────────────────────────────────────────────
   Handlebars.registerHelper("eq", (a, b) => a === b);
   Handlebars.registerHelper("gt", (a, b) => a > b);
+  Handlebars.registerHelper("and", (a, b) => !!a && !!b);
   Handlebars.registerHelper("math", (a, op, b) => {
     a = Number(a); b = Number(b);
     switch (op) {

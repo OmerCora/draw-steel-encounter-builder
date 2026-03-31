@@ -21,7 +21,7 @@ import { SYSTEM_ID } from "../config.mjs";
  */
 
 /** Pack IDs that should be selected by default in the source filter. */
-export const DEFAULT_SOURCE_IDS = new Set(["world", "draw-steel.monsters"]);
+export const DEFAULT_SOURCE_IDS = new Set(["draw-steel.monsters"]);
 
 /** Indexed fields requested from compendium packs. */
 const INDEX_FIELDS = [
