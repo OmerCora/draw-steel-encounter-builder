@@ -172,7 +172,9 @@
               </div>
               <span class="dsencounter-monster-name">
                 {{this.name}}
-                {{#if this.roleLabel}}
+                {{#if (and this.orgLabel this.roleLabel)}}
+                  <span class="dsencounter-monster-role">({{this.orgLabel}} / {{this.roleLabel}})</span>
+                {{else if this.roleLabel}}
                   <span class="dsencounter-monster-role">({{this.roleLabel}})</span>
                 {{else if this.orgLabel}}
                   <span class="dsencounter-monster-role">({{this.orgLabel}})</span>
@@ -345,6 +347,10 @@
        BOTTOM ACTION BAR
   ═══════════════════════════════════════════════════════════════════════════ --}}
   <section class="dsencounter-actions">
+    <button type="button" class="dsencounter-deploy-btn" data-action="deployToScene"
+            {{#unless hasSelections}}disabled{{/unless}}>
+      <i class="fa-solid fa-map"></i> {{localize "DSENCOUNTER.Action.DeployToScene"}}
+    </button>
     <button type="button" class="dsencounter-save-btn" data-action="saveToJournal"
             {{#unless hasSelections}}disabled{{/unless}}>
       <i class="fa-solid fa-book"></i> {{localize "DSENCOUNTER.Action.SaveToJournal"}}

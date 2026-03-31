@@ -55,6 +55,7 @@
       "CreateGroup": "Create Group",
       "DeleteGroup": "Delete group",
       "ToggleCaptain": "Toggle squad captain",
+      "DeployToScene": "Deploy to Scene",
       "SaveToJournal": "Save to Journal"
     },
 
@@ -85,6 +86,12 @@
       "AddHero": "For {heroes} heroes: need {spread} more EV (budget {budget})",
       "RemoveHero": "For {heroes} heroes: remove {spread} EV (budget {budget})",
       "Created": "Journal created: {name}"
+    },
+
+    "Deploy": {
+      "NoScene": "No active scene — open a scene before deploying.",
+      "PickPoint": "Click on the scene to place the encounter. Right-click or Escape to cancel.",
+      "Success": "Encounter deployed — tokens placed and combat created."
     }
   }
 }

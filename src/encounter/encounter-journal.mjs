@@ -174,7 +174,7 @@ function buildMonsterListHTML(monsters) {
   let html = `<ul>`;
   for (const m of map.values()) {
     const countStr = m.count > 1 ? ` (×${m.count})` : "";
-    const roleStr = m.roleLabel || m.orgLabel;
+    const roleStr = m.orgLabel && m.roleLabel ? `${m.orgLabel} / ${m.roleLabel}` : (m.roleLabel || m.orgLabel);
     const captainStr = m.isSquadCaptain ? ` ⚔️` : "";
     html += `<li>@UUID[${m.uuid}]{${escapeHTML(m.name)}}${countStr} — ${roleStr}, `;
     html += `${game.i18n.localize("DSENCOUNTER.Journal.Level")} ${m.level} (EV ${m.ev})${captainStr}</li>`;

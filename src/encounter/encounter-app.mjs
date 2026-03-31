@@ -10,6 +10,7 @@ import {
 } from "./encounter-calc.mjs";
 import { loadMonsterIndex, filterMonsters, getRoleOptions, getOrganizationOptions, getSourceOptions, DEFAULT_SOURCE_IDS } from "./monster-browser.mjs";
 import { createEncounterJournal } from "./encounter-journal.mjs";
+import { deployEncounter } from "./encounter-deploy.mjs";
 
 export class EncounterBuilderApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
@@ -54,6 +55,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       deleteGroup: EncounterBuilderApp.#onDeleteGroup,
       toggleCaptain: EncounterBuilderApp.#onToggleCaptain,
       saveToJournal: EncounterBuilderApp.#onSaveToJournal,
+      deployToScene: EncounterBuilderApp.#onDeployToScene,
       removeRoleFilter: EncounterBuilderApp.#onRemoveRoleFilter,
       removeSourceFilter: EncounterBuilderApp.#onRemoveSourceFilter,
       refreshIndex: EncounterBuilderApp.#onRefreshIndex,
@@ -630,7 +632,8 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         nameSpan.textContent += " ";
         const roleSpan = document.createElement("span");
         roleSpan.className = "dsencounter-monster-role";
-        roleSpan.textContent = `(${m.roleLabel || m.orgLabel})`;
+        const labelText = m.orgLabel && m.roleLabel ? `${m.orgLabel} / ${m.roleLabel}` : (m.roleLabel || m.orgLabel);
+        roleSpan.textContent = `(${labelText})`;
         nameSpan.appendChild(roleSpan);
       }
       left.appendChild(nameSpan);
@@ -835,6 +838,14 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       numHeroes: this.#numHeroes,
       avgVictories: this.#avgVictories,
       difficulty: this.#difficulty,
+      selectedMonsters: this.#selectedMonsters,
+      groups: this.#groups,
+    });
+  }
+
+  static async #onDeployToScene() {
+    if (this.#selectedMonsters.length === 0) return;
+    await deployEncounter({
       selectedMonsters: this.#selectedMonsters,
       groups: this.#groups,
     });
