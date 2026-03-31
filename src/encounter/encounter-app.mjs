@@ -734,7 +734,8 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   }
 
   static #onCreateGroup() {
-    this.#groups.push({ id: this.#nextGroupNum, name: `${game.i18n.localize("DSENCOUNTER.Group")} ${this.#nextGroupNum}` });
+    const displayNum = this.#groups.length + 1;
+    this.#groups.push({ id: this.#nextGroupNum, name: `${game.i18n.localize("DSENCOUNTER.Group")} ${displayNum}` });
     this.#nextGroupNum++;
     this.#debouncedRender();
   }
