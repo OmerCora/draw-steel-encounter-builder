@@ -299,12 +299,21 @@
                   <span class="dsencounter-monster-name">
                     {{this.name}}
                     {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
-                    {{#if this.isSquadCaptain}}
-                      <span class="dsencounter-captain-badge">⚔️</span>
-                    {{/if}}
                   </span>
+                  {{!-- Squad captain toggle: only for non-minion, non-mount in a group --}}
+                  {{#unless (eq this.organization "minion")}}
+                  {{#unless (eq this.role "mount")}}
+                    <button type="button" class="dsencounter-btn-icon dsencounter-btn-captain
+                            {{#if this.isSquadCaptain}}active{{/if}}"
+                            data-action="toggleCaptain" data-selection-id="{{this.ids.[0]}}"
+                            data-tooltip="{{localize "DSENCOUNTER.Action.ToggleCaptain"}}">
+                      <i class="fa-solid fa-crown"></i>
+                    </button>
+                  {{/unless}}
+                  {{/unless}}
                 </div>
                 <div class="dsencounter-monster-right">
+                  {{#if this.isSquadCaptain}}<span class="dsencounter-captain-badge">⚔️</span>{{/if}}
                   <span class="dsencounter-monster-level">{{this.level}} (EV {{this.ev}})</span>
                   <div class="dsencounter-row-actions">
                     <button type="button" class="dsencounter-btn-icon" data-action="incrementMonster"
@@ -315,17 +324,6 @@
                             data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
                       <i class="fa-solid fa-minus"></i>
                     </button>
-                    {{!-- Squad captain button: only for non-minion, non-mount in a group --}}
-                    {{#unless (eq this.organization "minion")}}
-                    {{#unless (eq this.role "mount")}}
-                      <button type="button" class="dsencounter-btn-icon dsencounter-btn-captain
-                              {{#if this.isSquadCaptain}}active{{/if}}"
-                              data-action="toggleCaptain" data-selection-id="{{this.ids.[0]}}"
-                              data-tooltip="{{localize "DSENCOUNTER.Action.ToggleCaptain"}}">
-                        <i class="fa-solid fa-crown"></i>
-                      </button>
-                    {{/unless}}
-                    {{/unless}}
                   </div>
                 </div>
               </div>

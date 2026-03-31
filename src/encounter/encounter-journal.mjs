@@ -75,7 +75,13 @@ export async function createEncounterJournal(data) {
     if (captain) {
       html += `<p><em>${game.i18n.localize("DSENCOUNTER.Journal.SquadCaptain")}: @UUID[${captain.uuid}]{${escapeHTML(captain.name)}}</em></p>`;
     }
-    html += buildMonsterListHTML(groupMonsters);
+    // Exclude one instance of the captain from the list (they're listed separately above)
+    const listMonsters = captain
+      ? groupMonsters.filter((m, i) => !(m.isSquadCaptain && i === groupMonsters.indexOf(m)))
+      : groupMonsters;
+    if (listMonsters.length > 0) {
+      html += buildMonsterListHTML(listMonsters);
+    }
   }
 
   // ── Adjustment suggestions ──────────────────────────────────────────────
