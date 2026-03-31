@@ -83,3 +83,36 @@ Hooks.on("getSceneControlButtons", (controls) => {
     onChange: () => EncounterBuilderApp.toggle(),
   };
 });
+
+// ── Canvas drop handler: reuse or import actors into folder ──────────────────
+
+async function getOrCreateEncounterFolder() {
+  const folderName = "Encounter Builder";
+  let folder = game.folders.find((f) => f.type === "Actor" && f.name === folderName);
+  if (!folder) {
+    folder = await Folder.create({ name: folderName, type: "Actor" });
+  }
+  return folder;
+}
+
+Hooks.on("dropCanvasData", async (canvas, data) => {
+  if (!_systemValid) return true;
+  if (data.type !== "Actor" || !data.dsencounter) return true;
+  if (!data.uuid?.startsWith("Compendium.")) return true;
+
+  // Check for an already-imported world actor from this compendium entry
+  let actor = game.actors.find((a) => a.flags?.core?.sourceId === data.uuid);
+
+  if (!actor) {
+    // Import into the Encounter Builder folder
+    const folder = await getOrCreateEncounterFolder();
+    const doc = await fromUuid(data.uuid);
+    if (!doc) return true;
+    actor = await Actor.create({ ...doc.toObject(), folder: folder.id });
+  }
+
+  // Create token at the drop position
+  const td = await actor.getTokenDocument({ x: data.x, y: data.y });
+  await canvas.scene.createEmbeddedDocuments("Token", [td.toObject()]);
+  return false; // Prevent default (which would re-import)
+});

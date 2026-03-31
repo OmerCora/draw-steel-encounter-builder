@@ -396,7 +396,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         // For dropping into selected section
         e.dataTransfer.setData("application/x-dsencounter-browser", uuid);
         // For dropping on canvas (Foundry Actor drop)
-        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid }));
+        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid, dsencounter: true }));
         e.dataTransfer.effectAllowed = "copyMove";
       });
     }
@@ -418,7 +418,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         // Also set Foundry-compatible Actor drag data for canvas drops
         const uuid = row.dataset.uuid;
         if (uuid) {
-          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid }));
+          e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid, dsencounter: true }));
         }
         e.dataTransfer.effectAllowed = "copyMove";
         row.classList.add("dsencounter-dragging");
