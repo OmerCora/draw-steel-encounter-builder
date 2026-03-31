@@ -8,8 +8,7 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
 
 ## Overview
 
-<img width="1100" height="822" alt="Screenshot 2026-03-31 135950" src="https://github.com/user-attachments/assets/75b62682-7c96-4703-bf6a-0ea5e110ba70" />
-
+<img width="1101" height="820" alt="Screenshot 2026-03-31 175116" src="https://github.com/user-attachments/assets/45973040-b8a5-497a-a986-a3f860a09848" />
 
 ### Encounter Math
 
@@ -41,6 +40,9 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
 - **Combat encounter** is created automatically with all tokens added as combatants
 - **Draw Steel combatant groups** are configured with proper type (squad/base), stamina pools, and captain assignments
 
+<img width="1227" height="751" alt="Screenshot 2026-03-31 175158" src="https://github.com/user-attachments/assets/ac9f32fa-d7ed-4b0c-ad2e-0c3da4d14403" />
+
+
 ### Journal Export
 - **Save to Journal** creates a JournalEntry with a full encounter summary:
   - Target vs. actual difficulty, total EV, budget range, party ES
@@ -48,6 +50,9 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
   - Squad groupings with captain designation
   - Adjustment suggestions for ±1 hero (how much EV to add or remove)
 - Journals are auto-organized into an "Encounter Builder" folder
+
+<img width="974" height="910" alt="Screenshot 2026-03-31 175243" src="https://github.com/user-attachments/assets/e3bf974c-1d65-4f4f-8017-34bc042485bf" />
+
 
 ### Smart Token Placement
 - Dragging a compendium monster to the canvas checks for an existing world actor (by `sourceId` flag) before importing
