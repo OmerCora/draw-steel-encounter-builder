@@ -32,8 +32,6 @@ Encounter Builder gives Directors a dedicated two-panel interface for composing 
 - **Drag to reorder** between groups, or drag out to ungrouped
 - **Drag to canvas** to place tokens from the selected list
 
-<img width="967" height="832" alt="Screenshot 2026-03-31 140402" src="https://github.com/user-attachments/assets/dd2b2fd0-e801-4df0-94a7-c80a3aa67e23" />
-
 ### Deploy to Scene
 - **One-click deployment** places all selected monsters onto the active scene in an organized grid layout
 - Monsters are **grouped spatially** matching your squad groupings, with 1-cell gaps between groups
