@@ -42,6 +42,7 @@
 .dsencounter-input-group {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
 }
 
@@ -60,29 +61,69 @@
 }
 
 .dsencounter-input-group select {
-  min-width: 110px;
+  min-width: 80px;
+}
+
+/* ── Stepper (increment/decrement) control ──────────────────────────────── */
+
+.dsencounter-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--color-border-light-2, #555);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dsencounter-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 26px;
+  background: rgba(128, 128, 128, 0.1);
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
+  line-height: 1;
+}
+
+.dsencounter-stepper-btn:hover {
+  background: rgba(128, 128, 128, 0.25);
+}
+
+.dsencounter-stepper-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 2px;
+  color: inherit;
 }
 
 .dsencounter-input-summary {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column;
+  gap: 2px;
   margin-left: auto;
   font-size: 13px;
   color: inherit;
 }
 
-.dsencounter-es-label,
-.dsencounter-budget-label,
-.dsencounter-level-hint {
+.dsencounter-summary-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
   white-space: nowrap;
 }
 
-.dsencounter-level-hint {
-  font-size: 12px;
-  color: inherit;
-  opacity: 0.7;
-}
+.dsencounter-level-hint {\n  font-size: 12px;\n  color: inherit;\n  opacity: 0.7;\n}
 
 /* ══════════════════════════════════════════════════════════════════════════
    TWO-COLUMN LAYOUT
@@ -355,6 +396,8 @@
 .dsencounter-danger-icon {
   font-size: 12px;
   line-height: 1;
+  position: relative;
+  top: 2px;
 }
 
 .dsencounter-empty {
@@ -518,8 +561,8 @@
 
 .dsencounter-count {
   font-size: 12px;
-  font-weight: 600;
-  color: #f39c12;
+  font-weight: 700;
+  color: #e67e22;
 }
 
 .dsencounter-captain-badge {

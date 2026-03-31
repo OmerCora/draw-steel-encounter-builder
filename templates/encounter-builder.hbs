@@ -14,13 +14,21 @@
     </div>
 
     <div class="dsencounter-input-group">
-      <label for="eb-numHeroes">{{localize "DSENCOUNTER.Input.NumHeroes"}}</label>
-      <input id="eb-numHeroes" type="number" name="numHeroes" value="{{numHeroes}}" min="1" step="1" />
+      <label>{{localize "DSENCOUNTER.Input.NumHeroes"}}</label>
+      <div class="dsencounter-stepper">
+        <button type="button" class="dsencounter-stepper-btn" data-action="decrementHeroes">−</button>
+        <span class="dsencounter-stepper-value" data-field="numHeroes">{{numHeroes}}</span>
+        <button type="button" class="dsencounter-stepper-btn" data-action="incrementHeroes">+</button>
+      </div>
     </div>
 
     <div class="dsencounter-input-group">
-      <label for="eb-avgVictories">{{localize "DSENCOUNTER.Input.AvgVictories"}}</label>
-      <input id="eb-avgVictories" type="number" name="avgVictories" value="{{avgVictories}}" min="0" max="16" step="1" />
+      <label>{{localize "DSENCOUNTER.Input.AvgVictories"}}</label>
+      <div class="dsencounter-stepper">
+        <button type="button" class="dsencounter-stepper-btn" data-action="decrementVictories">−</button>
+        <span class="dsencounter-stepper-value" data-field="avgVictories">{{avgVictories}}</span>
+        <button type="button" class="dsencounter-stepper-btn" data-action="incrementVictories">+</button>
+      </div>
     </div>
 
     <div class="dsencounter-input-group">
@@ -35,23 +43,27 @@
     </div>
 
     <div class="dsencounter-input-summary">
-      <span class="dsencounter-es-label">
-        {{localize "DSENCOUNTER.Input.ES"}}: <strong>{{partyES}}</strong>
-      </span>
-      <span class="dsencounter-budget-label">
-        {{localize "DSENCOUNTER.Input.Budget"}}:
-        <strong>
-          {{#if (eq budget.max Infinity)}}
-            {{budget.min}}+
-          {{else}}
-            {{budget.min}} – {{budget.max}}
-          {{/if}}
-        </strong>
-      </span>
-      <span class="dsencounter-level-hint">
-        {{localize "DSENCOUNTER.Input.SuggestedLevel"}}: <strong>1–{{levelRange.max}}</strong>
-        ({{localize "DSENCOUNTER.Input.Solo"}}: 1–{{levelRange.soloMax}})
-      </span>
+      <div class="dsencounter-summary-row">
+        <span class="dsencounter-es-label">
+          {{localize "DSENCOUNTER.Input.ES"}}: <strong>{{partyES}}</strong>
+        </span>
+        <span class="dsencounter-budget-label">
+          {{localize "DSENCOUNTER.Input.Budget"}}:
+          <strong>
+            {{#if (eq budget.max Infinity)}}
+              {{budget.min}}+
+            {{else}}
+              {{budget.min}} – {{budget.max}}
+            {{/if}}
+          </strong>
+        </span>
+      </div>
+      <div class="dsencounter-summary-row">
+        <span class="dsencounter-level-hint">
+          {{localize "DSENCOUNTER.Input.SuggestedLevel"}}: <strong>1–{{levelRange.max}}</strong>
+          ({{localize "DSENCOUNTER.Input.Solo"}}: 1–{{levelRange.soloMax}})
+        </span>
+      </div>
     </div>
   </section>
 
@@ -204,16 +216,11 @@
                style="width: {{math progressBar.maxPct '-' progressBar.minPct}}%"></div>
           {{!-- Rest is implicit (red on overflow) --}}
         </div>
-        {{!-- Current EV marker --}}
+        {{!-- Current EV marker (hidden at zero) --}}
         {{#if totalEV}}
         <div class="dsencounter-progress-marker dsencounter-marker-{{progressBar.zone}}"
              style="left: {{progressBar.currentPct}}%">
           <span class="dsencounter-marker-label">{{totalEV}}</span>
-        </div>
-        {{else}}
-        <div class="dsencounter-progress-marker dsencounter-marker-under"
-             style="left: 0%">
-          <span class="dsencounter-marker-label">0</span>
         </div>
         {{/if}}
         {{!-- Labels --}}

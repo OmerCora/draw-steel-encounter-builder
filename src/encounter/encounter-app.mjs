@@ -42,6 +42,10 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       icon: "fa-solid fa-swords",
     },
     actions: {
+      incrementHeroes: EncounterBuilderApp.#onIncrementHeroes,
+      decrementHeroes: EncounterBuilderApp.#onDecrementHeroes,
+      incrementVictories: EncounterBuilderApp.#onIncrementVictories,
+      decrementVictories: EncounterBuilderApp.#onDecrementVictories,
       addMonster: EncounterBuilderApp.#onAddMonster,
       removeMonster: EncounterBuilderApp.#onRemoveMonster,
       incrementMonster: EncounterBuilderApp.#onIncrementMonster,
@@ -81,13 +85,18 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   #avgVictories = 0;
   #difficulty = "standard";
 
+  constructor(...args) {
+    super(...args);
+    this.#numHeroes = game.settings.get(MODULE_ID, "numHeroes") ?? 5;
+  }
+
   /** Filters for the monster browser. */
   #searchText = "";
   #roleFilters = new Set();
   #orgFilter = "";
   #sourceFilters = new Set();
   #sourceFiltersInitialized = false;
-  #levelFilter = 0;
+  #levelFilter = -1;
   #sortOrder = "ev"; // "ev" (default) or "name"
 
   /** How many monsters to show in the browser at once. Grows via scroll. */
@@ -291,14 +300,6 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       this.#heroLevel = Number(e.target.value) || 1;
       this.#debouncedRender();
     });
-    html.querySelector('[name="numHeroes"]')?.addEventListener("change", (e) => {
-      this.#numHeroes = Math.max(Number(e.target.value) || 1, 1);
-      this.#debouncedRender();
-    });
-    html.querySelector('[name="avgVictories"]')?.addEventListener("change", (e) => {
-      this.#avgVictories = Math.clamped(Number(e.target.value) || 0, 0, 16);
-      this.#debouncedRender();
-    });
     html.querySelector('[name="difficulty"]')?.addEventListener("change", (e) => {
       this.#difficulty = e.target.value;
       this.#debouncedRender();
@@ -453,6 +454,31 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         if (browserUuid) {
           const targetGroupId = zone.dataset.groupId ? Number(zone.dataset.groupId) : null;
           this.#addMonsterToGroup(browserUuid, targetGroupId);
+          return;
+        }
+      });
+    }
+
+    // Also allow dropping on the selected-list container itself (empty space → ungrouped)
+    const selectedList = html.querySelector(".dsencounter-selected-list");
+    if (selectedList) {
+      selectedList.addEventListener("dragover", (e) => {
+        // Only handle if the drop target is the list itself, not a child drop-zone
+        if (e.target.closest(".dsencounter-drop-zone")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+      selectedList.addEventListener("drop", (e) => {
+        if (e.target.closest(".dsencounter-drop-zone")) return;
+        e.preventDefault();
+        const selectionData = e.dataTransfer.getData("application/x-dsencounter-selection");
+        if (selectionData) {
+          this.#moveMonsterToGroup(Number(selectionData), null);
+          return;
+        }
+        const browserUuid = e.dataTransfer.getData("application/x-dsencounter-browser");
+        if (browserUuid) {
+          this.#addMonsterToGroup(browserUuid, null);
           return;
         }
       });
@@ -634,6 +660,28 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   /* -------------------------------------------------- */
   /*  Action Handlers                                   */
   /* -------------------------------------------------- */
+
+  static #onIncrementHeroes() {
+    this.#numHeroes += 1;
+    game.settings.set(MODULE_ID, "numHeroes", this.#numHeroes);
+    this.#debouncedRender();
+  }
+
+  static #onDecrementHeroes() {
+    this.#numHeroes = Math.max(this.#numHeroes - 1, 1);
+    game.settings.set(MODULE_ID, "numHeroes", this.#numHeroes);
+    this.#debouncedRender();
+  }
+
+  static #onIncrementVictories() {
+    this.#avgVictories = Math.min(this.#avgVictories + 2, 16);
+    this.#debouncedRender();
+  }
+
+  static #onDecrementVictories() {
+    this.#avgVictories = Math.max(this.#avgVictories - 2, 0);
+    this.#debouncedRender();
+  }
 
   static #onAddMonster(event, target) {
     const uuid = target.dataset.uuid;

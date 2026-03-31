@@ -16,6 +16,15 @@ Hooks.once("init", () => {
   if (game.system?.id !== SYSTEM_ID) return;
   _systemValid = true;
 
+  // Register settings
+  game.settings.register(MODULE_ID, "numHeroes", {
+    name: "Number of Heroes",
+    scope: "client",
+    config: false,
+    type: Number,
+    default: 5,
+  });
+
   // Load templates
   foundry.applications.handlebars.loadTemplates([
     `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
