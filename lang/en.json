@@ -92,6 +92,167 @@
       "NoScene": "No active scene — open a scene before deploying.",
       "PickPoint": "Click on the scene to place the encounter. Right-click or Escape to cancel.",
       "Success": "Encounter deployed — tokens placed and combat created."
+    },
+
+    "Homebrew": {
+      "WindowTitle": "Homebrew Builder",
+      "WizardTitle": "Monster Builder",
+      "LandingTitle": "Homebrew Builder",
+      "LandingSubtitle": "Create custom creatures for your encounters.",
+      "OpenHomebrew": "Homebrew",
+      "ComingSoon": "Coming soon",
+
+      "Monster": "Monster",
+      "Animal": "Animal",
+      "Retainer": "Retainer",
+      "Ability": "Ability",
+
+      "Section": {
+        "Basics": "Basics",
+        "Traits": "Traits",
+        "Defenses": "Defenses",
+        "Characteristics": "Characteristics",
+        "Abilities": "Abilities and Features"
+      },
+
+      "Field": {
+        "Name": "Name",
+        "Level": "Level",
+        "Role": "Role",
+        "Organization": "Organization",
+        "Size": "Size",
+        "SizeLetter": "Letter",
+        "Speed": "Speed",
+        "Stability": "Stability",
+        "MovementTypes": "Movement Types",
+        "Keywords": "Keywords",
+        "Immunities": "Immunities",
+        "Weaknesses": "Weaknesses",
+        "ExtraStamina": "Extra Stamina (+3×Level + 3)",
+        "AbilityName": "Ability Name",
+        "DistanceType": "Distance",
+        "Range": "Range",
+        "Targets": "Targets",
+        "TargetType": "Target",
+        "TargetValue": "Count",
+        "TargetCustom": "Override",
+        "DamageTypes": "Damage Types",
+        "PowerRollChars": "Power Roll Characteristics",
+        "EffectName": "Effect Name",
+        "EffectType": "Effect Type",
+        "Condition": "Condition",
+        "ConditionEnd": "Ends",
+        "Movement": "Direction",
+        "Distance": "Distance",
+        "ResourceType": "Resource Type",
+        "Amount": "Amount",
+        "DisplayText": "Text"
+      },
+
+      "Placeholder": {
+        "Name": "e.g. Shadow Lurker",
+        "AbilityName": "e.g. Shadow Strike",
+        "EffectName": "e.g. Grabbed",
+        "TierDisplay": "Describe effect...",
+        "TargetCustom": "Custom label"
+      },
+
+      "EffectType": {
+        "damage": "Damage",
+        "applied": "Applied Effect",
+        "forced": "Forced Movement",
+        "other": "Other",
+        "resource": "Gain Resource"
+      },
+
+      "ConditionEnd": {
+        "none": "—",
+        "turn": "End of Turn",
+        "save": "Save Ends",
+        "encounter": "Encounter",
+        "respite": "Respite"
+      },
+
+      "Movement": {
+        "push": "Push",
+        "pull": "Pull",
+        "slide": "Slide"
+      },
+
+      "ResourceType": {
+        "surge": "Surge",
+        "heroic": "Heroic Resource",
+        "epic": "Epic Resource"
+      },
+
+      "TargetType": {
+        "creature": "Creature",
+        "object": "Object",
+        "creatureObject": "Creature or Object",
+        "enemy": "Enemy",
+        "enemyObject": "Enemy or Object",
+        "ally": "Ally",
+        "selfAlly": "Self and Ally",
+        "self": "Self",
+        "selfOrAlly": "Self or Ally",
+        "selfOrCreature": "Self or Creature",
+        "special": "Special"
+      },
+
+      "Hint": {
+        "Characteristics": "Assign values to your monster's five characteristics. Highest value drives potency and damage.",
+        "Suggested": "Suggested array:",
+        "OneSignature": "Only one signature ability allowed.",
+        "AutoDamage": "Leave blank to use calculated default."
+      },
+
+      "AddImmunity": "Add Immunity",
+      "AddWeakness": "Add Weakness",
+      "AddSignature": "Add Signature Ability",
+      "AddAbility": "Add Ability",
+      "AddTrait": "Add Trait",
+      "AddMalice": "Add Malice Feature",
+      "AddEffect": "Add Effect",
+      "ApplySuggested": "Apply Suggested",
+      "CreateMonster": "Create Monster",
+
+      "Preview": {
+        "Level": "Level",
+        "Keywords": "Keywords",
+        "EVFor4": "EV (for 4 heroes)",
+        "Stamina": "Stamina",
+        "Speed": "Speed",
+        "Size": "Size",
+        "Stability": "Stability",
+        "FreeStrike": "Free Strike",
+        "Immunities": "Immunities",
+        "Weaknesses": "Weaknesses",
+        "Characteristics": "Characteristics",
+        "Effect": "Effect",
+        "Damage": "damage",
+        "Push": "push",
+        "Pull": "pull",
+        "Slide": "slide",
+        "Gain": "Gain"
+      },
+
+      "Stat": {
+        "EV": "EV",
+        "Stamina": "Stamina",
+        "FreeStrike": "Free Strike",
+        "Echelon": "Echelon",
+        "Turns": "Turns",
+        "Damage": "Damage",
+        "Potency": "Potency",
+        "Tier1": "Tier 1 (≤11)",
+        "Tier2": "Tier 2 (12–16)",
+        "Tier3": "Tier 3 (17+)"
+      },
+
+      "Created": "Monster created: {name}",
+      "Warn": {
+        "NoName": "Please enter a name for the monster."
+      }
     }
   }
 }

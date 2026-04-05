@@ -8,9 +8,10 @@ import {
   calcPartyES, calcBudgetRange, calcHeroES,
   getDifficulty, getRecommendedLevelRange, DIFFICULTIES,
 } from "./encounter-calc.mjs";
-import { loadMonsterIndex, filterMonsters, getRoleOptions, getOrganizationOptions, getSourceOptions, DEFAULT_SOURCE_IDS } from "./monster-browser.mjs";
+import { loadMonsterIndex, getCachedMonsterIndex, filterMonsters, getRoleOptions, getOrganizationOptions, getSourceOptions, DEFAULT_SOURCE_IDS } from "./monster-browser.mjs";
 import { createEncounterJournal } from "./encounter-journal.mjs";
 import { deployEncounter } from "./encounter-deploy.mjs";
+import { HomebrewApp } from "../homebrew/homebrew-app.mjs";
 
 export class EncounterBuilderApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
@@ -61,6 +62,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       refreshIndex: EncounterBuilderApp.#onRefreshIndex,
       clearSearch: EncounterBuilderApp.#onClearSearch,
       previewMonster: EncounterBuilderApp.#onPreviewMonster,
+      openHomebrew: EncounterBuilderApp.#onOpenHomebrew,
     },
   };
 
@@ -137,9 +139,9 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   /* -------------------------------------------------- */
 
   async _prepareContext(_options) {
-    // Lazy-load monster index
+    // Lazy-load monster index (uses shared cache)
     if (!this.#indexLoaded) {
-      this.#monsterIndex = await loadMonsterIndex();
+      this.#monsterIndex = await getCachedMonsterIndex();
       this.#indexLoaded = true;
     }
 
@@ -827,7 +829,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   static async #onRefreshIndex() {
     this.#indexLoaded = false;
-    this.#monsterIndex = await loadMonsterIndex();
+    this.#monsterIndex = await getCachedMonsterIndex(true);
     this.#indexLoaded = true;
     this.#displayLimit = 50;
     this.#debouncedRender();
@@ -870,5 +872,9 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     } finally {
       this.maximize();
     }
+  }
+
+  static #onOpenHomebrew() {
+    HomebrewApp.toggle();
   }
 }

@@ -29,7 +29,8 @@
     "src/module.mjs"
   ],
   "styles": [
-    "styles/encounter-builder.css"
+    "styles/encounter-builder.css",
+    "styles/homebrew.css"
   ],
   "languages": [
     {

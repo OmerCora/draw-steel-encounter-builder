@@ -43,29 +43,32 @@ export async function loadMonsterIndex() {
   const roles = ds.CONFIG.monsters.roles;
   const organizations = ds.CONFIG.monsters.organizations;
 
-  // ── Compendium packs ─────────────────────────────────────────────────────
-  for (const pack of game.packs) {
-    if (pack.documentName !== "Actor") continue;
-    // Only include system packs and module packs that belong to the draw-steel ecosystem
+  // ── Compendium packs (parallel) ──────────────────────────────────────────
+  const actorPacks = game.packs.filter(pack => {
+    if (pack.documentName !== "Actor") return false;
     const meta = pack.metadata;
-    if (meta.packageType === "system" && meta.packageName !== SYSTEM_ID) continue;
+    if (meta.packageType === "system" && meta.packageName !== SYSTEM_ID) return false;
+    return true;
+  });
 
+  const packResults = await Promise.all(actorPacks.map(async (pack) => {
+    const meta = pack.metadata;
     try {
       const index = await pack.getIndex({ fields: INDEX_FIELDS });
-      // Build a display label: use pack title for default sources, qualified name otherwise
       const packId = meta.id;
       const sourceLabel = DEFAULT_SOURCE_IDS.has(packId)
         ? pack.title
         : `${pack.title} (${meta.packageName})`;
 
+      const packEntries = [];
       for (const entry of index) {
         const monster = entry.system?.monster;
-        if (!monster) continue; // skip non-NPC actors (heroes, etc.)
+        if (!monster) continue;
 
         const org = monster.organization ?? "";
         const role = monster.role ?? "";
 
-        entries.push({
+        packEntries.push({
           uuid: `Compendium.${meta.id}.Actor.${entry._id}`,
           name: entry.name,
           img: entry.img || "icons/svg/mystery-man.svg",
@@ -79,9 +82,15 @@ export async function loadMonsterIndex() {
           sourceLabel,
         });
       }
+      return packEntries;
     } catch (err) {
       console.warn(`draw-steel-encounter-builder | Failed to index pack ${meta.id}:`, err);
+      return [];
     }
+  }));
+
+  for (const packEntries of packResults) {
+    entries.push(...packEntries);
   }
 
   // ── World actors ─────────────────────────────────────────────────────────
@@ -111,6 +120,30 @@ export async function loadMonsterIndex() {
   // Sort alphabetically
   entries.sort((a, b) => a.name.localeCompare(b.name));
   return entries;
+}
+
+/** @type {Promise<MonsterEntry[]>|null} Shared cache for the monster index. */
+let _indexPromise = null;
+
+/**
+ * Return the cached monster index, loading it if necessary.
+ * Multiple callers will share the same in-flight promise.
+ * @param {boolean} [force=false] Force a fresh reload.
+ * @returns {Promise<MonsterEntry[]>}
+ */
+export function getCachedMonsterIndex(force = false) {
+  if (!_indexPromise || force) {
+    _indexPromise = loadMonsterIndex();
+  }
+  return _indexPromise;
+}
+
+/**
+ * Pre-warm the monster index cache (call from the ready hook).
+ * Does not block — just starts the async load.
+ */
+export function preloadMonsterIndex() {
+  getCachedMonsterIndex();
 }
 
 /**

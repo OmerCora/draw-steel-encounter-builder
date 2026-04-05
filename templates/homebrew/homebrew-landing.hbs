@@ -1,0 +1,18 @@
+{{!-- Homebrew Landing Page --}}
+<div class="dshomebrew-landing">
+  <h2 class="dshomebrew-landing-title">{{localize "DSENCOUNTER.Homebrew.LandingTitle"}}</h2>
+  <p class="dshomebrew-landing-subtitle">{{localize "DSENCOUNTER.Homebrew.LandingSubtitle"}}</p>
+
+  <div class="dshomebrew-category-grid">
+    {{#each categories}}
+    <button type="button"
+            class="dshomebrew-category-btn {{#unless enabled}}disabled{{/unless}}"
+            {{#if enabled}}data-action="{{action}}"{{/if}}
+            {{#unless enabled}}disabled{{/unless}}>
+      <i class="{{icon}}"></i>
+      <span>{{label}}</span>
+      {{#unless enabled}}<span class="dshomebrew-coming-soon">{{localize "DSENCOUNTER.Homebrew.ComingSoon"}}</span>{{/unless}}
+    </button>
+    {{/each}}
+  </div>
+</div>

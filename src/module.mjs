@@ -5,6 +5,8 @@
 
 import { MODULE_ID, SYSTEM_ID } from "./config.mjs";
 import { EncounterBuilderApp } from "./encounter/encounter-app.mjs";
+import { HomebrewApp } from "./homebrew/homebrew-app.mjs";
+import { preloadMonsterIndex } from "./encounter/monster-browser.mjs";
 
 const log = (...args) => console.log(`${MODULE_ID} |`, ...args);
 
@@ -44,6 +46,8 @@ Hooks.once("init", () => {
   // Load templates
   foundry.applications.handlebars.loadTemplates([
     `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
+    `modules/${MODULE_ID}/templates/homebrew/homebrew-landing.hbs`,
+    `modules/${MODULE_ID}/templates/homebrew/monster-wizard.hbs`,
   ]);
 
   // ── Handlebars helpers ───────────────────────────────────────────────────
@@ -78,7 +82,10 @@ Hooks.once("ready", () => {
   if (!_systemValid) return;
 
   // Public API
-  game.modules.get(MODULE_ID).api = { EncounterBuilderApp };
+  game.modules.get(MODULE_ID).api = { EncounterBuilderApp, HomebrewApp };
+
+  // Pre-warm monster index in the background so the first open is instant
+  preloadMonsterIndex();
 
   log("Ready — use game.modules.get('" + MODULE_ID + "').api.EncounterBuilderApp.toggle()");
 });

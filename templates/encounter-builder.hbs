@@ -347,6 +347,10 @@
        BOTTOM ACTION BAR
   ═══════════════════════════════════════════════════════════════════════════ --}}
   <section class="dsencounter-actions">
+    <button type="button" class="dsencounter-homebrew-btn" data-action="openHomebrew">
+      <i class="fa-solid fa-hammer"></i> {{localize "DSENCOUNTER.Homebrew.OpenHomebrew"}}
+    </button>
+    <div class="dsencounter-actions-spacer"></div>
     <button type="button" class="dsencounter-deploy-btn" data-action="deployToScene"
             {{#unless hasSelections}}disabled{{/unless}}>
       <i class="fa-solid fa-map"></i> {{localize "DSENCOUNTER.Action.DeployToScene"}}
