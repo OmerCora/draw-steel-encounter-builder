@@ -1,0 +1,64 @@
+{{!-- PART: topBar – Party inputs + ES/budget summary --}}
+<section class="dsencounter-inputs">
+  <div class="dsencounter-input-group">
+    <label for="eb-heroLevel">{{localize "DSENCOUNTER.Input.HeroLevel"}}</label>
+    <select id="eb-heroLevel" name="heroLevel">
+      {{#each levelOptions}}
+        <option value="{{this}}" {{#if (eq this ../heroLevel)}}selected{{/if}}>{{this}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="dsencounter-input-group">
+    <label>{{localize "DSENCOUNTER.Input.NumHeroes"}}</label>
+    <div class="dsencounter-stepper">
+      <button type="button" class="dsencounter-stepper-btn" data-action="decrementHeroes">−</button>
+      <span class="dsencounter-stepper-value" data-field="numHeroes">{{numHeroes}}</span>
+      <button type="button" class="dsencounter-stepper-btn" data-action="incrementHeroes">+</button>
+    </div>
+  </div>
+
+  <div class="dsencounter-input-group">
+    <label>{{localize "DSENCOUNTER.Input.AvgVictories"}}</label>
+    <div class="dsencounter-stepper">
+      <button type="button" class="dsencounter-stepper-btn" data-action="decrementVictories">−</button>
+      <span class="dsencounter-stepper-value" data-field="avgVictories">{{avgVictories}}</span>
+      <button type="button" class="dsencounter-stepper-btn" data-action="incrementVictories">+</button>
+    </div>
+  </div>
+
+  <div class="dsencounter-input-group">
+    <label for="eb-difficulty">{{localize "DSENCOUNTER.Input.Difficulty"}}</label>
+    <select id="eb-difficulty" name="difficulty">
+      {{#each difficulties}}
+        <option value="{{this}}" {{#if (eq this ../difficulty)}}selected{{/if}}>
+          {{localize (concat "DSENCOUNTER.Difficulty." (capitalize this))}}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="dsencounter-input-summary">
+    <div class="dsencounter-summary-row">
+      <span class="dsencounter-es-label">
+        {{localize "DSENCOUNTER.Input.ES"}}: <strong>{{partyES}}</strong>
+      </span>
+      <span class="dsencounter-budget-label">
+        {{localize "DSENCOUNTER.Input.Budget"}}:
+        <strong>
+          {{#if (eq budget.max Infinity)}}
+            {{budget.min}}+
+          {{else}}
+            {{budget.min}} – {{budget.max}}
+          {{/if}}
+        </strong>
+      </span>
+    </div>
+    <div class="dsencounter-summary-row">
+      <span class="dsencounter-level-hint">
+        {{localize "DSENCOUNTER.Input.SuggestedLevel"}}: <strong>1–{{levelRange.max}}</strong>
+        ({{localize "DSENCOUNTER.Input.Solo"}}: 1–{{levelRange.soloMax}})
+      </span>
+    </div>
+  </div>
+</section>

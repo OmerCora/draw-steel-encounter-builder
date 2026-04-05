@@ -10,18 +10,10 @@
 }
 
 .draw-steel-encounter-builder .window-content {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  grid-template-rows: auto 1fr auto;
   padding: 0;
-  overflow: hidden;
-}
-
-/* ── Form root ──────────────────────────────────────────────────────────── */
-
-.dsencounter-form {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   overflow: hidden;
 }
 
@@ -30,6 +22,7 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .dsencounter-inputs {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -126,24 +119,17 @@
 .dsencounter-level-hint {\n  font-size: 12px;\n  color: inherit;\n  opacity: 0.7;\n}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   TWO-COLUMN LAYOUT
+   TWO-COLUMN LAYOUT (grid cells – no wrapper needed)
    ══════════════════════════════════════════════════════════════════════════ */
-
-.dsencounter-columns {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
 
 /* ── LEFT: Monster Browser ──────────────────────────────────────────────── */
 
 .dsencounter-browser {
   display: flex;
   flex-direction: column;
-  flex: 55 0 0%;
   border-right: 1px solid var(--color-border-light-2, #555);
   overflow: hidden;
+  min-height: 0;
 }
 
 .dsencounter-browser-header {
@@ -267,6 +253,11 @@
 .dsencounter-chip-source {
   background: rgba(60, 120, 200, 0.12);
   border-color: var(--color-border-light-2, #4a6);
+}
+
+.dsencounter-chip-keyword {
+  background: rgba(200, 140, 60, 0.15);
+  border-color: var(--color-border-light-2, #a86);
 }
 
 /* ── Browser monster list ───────────────────────────────────────────────── */
@@ -413,8 +404,8 @@
 .dsencounter-selected {
   display: flex;
   flex-direction: column;
-  flex: 45 0 0%;
   overflow: hidden;
+  min-height: 0;
 }
 
 .dsencounter-selected-header {
@@ -654,6 +645,7 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .dsencounter-actions {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 8px;

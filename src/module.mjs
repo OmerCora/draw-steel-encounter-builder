@@ -45,9 +45,15 @@ Hooks.once("init", () => {
 
   // Load templates
   foundry.applications.handlebars.loadTemplates([
-    `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
+    `modules/${MODULE_ID}/templates/parts/encounter-topbar.hbs`,
+    `modules/${MODULE_ID}/templates/parts/encounter-browser.hbs`,
+    `modules/${MODULE_ID}/templates/parts/encounter-selected.hbs`,
+    `modules/${MODULE_ID}/templates/parts/encounter-actionbar.hbs`,
     `modules/${MODULE_ID}/templates/homebrew/homebrew-landing.hbs`,
     `modules/${MODULE_ID}/templates/homebrew/monster-wizard.hbs`,
+    `modules/${MODULE_ID}/templates/homebrew/ability-wizard.hbs`,
+    `modules/${MODULE_ID}/templates/homebrew/partials/ability-editor.hbs`,
+    `modules/${MODULE_ID}/templates/homebrew/partials/potency-tier.hbs`,
   ]);
 
   // ── Handlebars helpers ───────────────────────────────────────────────────

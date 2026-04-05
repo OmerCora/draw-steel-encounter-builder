@@ -1,0 +1,94 @@
+{{!-- Ability Wizard – two-panel layout: ability editor (left) + preview (right) --}}
+<div class="dshomebrew-wizard">
+
+  <div class="dshomebrew-wizard-body">
+
+    {{!-- ══════════ LEFT PANEL: Ability Editor ══════════ --}}
+    <div class="dshomebrew-input-panel">
+      <section class="dshomebrew-section">
+        <h3 class="dshomebrew-section-title">{{localize "DSENCOUNTER.Homebrew.Section.AbilityDetails"}}</h3>
+        {{> "modules/draw-steel-encounter-builder/templates/homebrew/partials/ability-editor.hbs" editor }}
+      </section>
+    </div>
+
+    {{!-- ══════════ RIGHT PANEL: Preview ══════════ --}}
+    <div class="dshomebrew-preview-panel">
+      <div class="dshomebrew-statblock">
+
+        <div class="dshomebrew-sb-header">
+          <div class="dshomebrew-sb-name">
+            {{#if preview.name}}{{preview.name}}{{else}}<span class="dshomebrew-sb-placeholder">{{localize "DSENCOUNTER.Homebrew.Placeholder.AbilityName"}}</span>{{/if}}
+          </div>
+          <div class="dshomebrew-sb-subtitle">
+            {{preview.typeLabel}}{{#if preview.categoryLabel}} — {{preview.categoryLabel}}{{/if}}
+          </div>
+        </div>
+
+        <div class="dshomebrew-sb-divider"></div>
+
+        {{#if preview.isTriggered}}
+        <div class="dshomebrew-sb-line">
+          <span class="dshomebrew-sb-label">{{localize "DSENCOUNTER.Homebrew.Field.Trigger"}}:</span>
+          {{#if preview.trigger}}{{preview.trigger}}{{else}}<em>—</em>{{/if}}
+        </div>
+        {{/if}}
+
+        {{#if preview.resourceCost}}
+        <div class="dshomebrew-sb-line">
+          <span class="dshomebrew-sb-label">{{localize "DSENCOUNTER.Homebrew.Field.ResourceCost"}}:</span> {{preview.resourceCost}}
+        </div>
+        {{/if}}
+
+        {{#if preview.keywordLabels}}
+        <div class="dshomebrew-sb-line">
+          <span class="dshomebrew-sb-label">{{localize "DSENCOUNTER.Homebrew.Preview.Keywords"}}:</span> {{preview.keywordLabels}}
+        </div>
+        {{/if}}
+
+        <div class="dshomebrew-sb-line">
+          Distance: {{preview.distanceLabel}} ◆ Target: {{preview.targetLabel}}
+        </div>
+
+        {{#if preview.hasPowerRoll}}
+        <div class="dshomebrew-sb-ability-roll">
+          Power Roll + {{preview.charLabel}}
+        </div>
+        {{/if}}
+
+        {{#if preview.hasEffects}}
+        <div class="dshomebrew-sb-tiers">
+          <div class="dshomebrew-sb-tier">
+            <span class="dshomebrew-sb-tier-label">≤11:</span>
+            <span>{{preview.tierPreview.[1]}}</span>
+          </div>
+          <div class="dshomebrew-sb-tier">
+            <span class="dshomebrew-sb-tier-label">12–16:</span>
+            <span>{{preview.tierPreview.[2]}}</span>
+          </div>
+          <div class="dshomebrew-sb-tier">
+            <span class="dshomebrew-sb-tier-label">17+:</span>
+            <span>{{preview.tierPreview.[3]}}</span>
+          </div>
+        </div>
+        {{/if}}
+
+        {{#if preview.effectAfter}}
+        <div class="dshomebrew-sb-effect-after">
+          <span class="dshomebrew-sb-label">{{localize "DSENCOUNTER.Homebrew.Preview.EffectAfter"}}:</span> {{preview.effectAfter}}
+        </div>
+        {{/if}}
+
+      </div>
+    </div>
+
+  </div>
+
+  {{!-- Footer --}}
+  <footer class="dshomebrew-wizard-footer">
+    <div class="dshomebrew-spacer"></div>
+    <button type="button" class="dshomebrew-btn-create" data-action="createAbility">
+      <i class="fa-solid fa-plus"></i> {{localize "DSENCOUNTER.Homebrew.CreateAbility"}}
+    </button>
+  </footer>
+
+</div>

@@ -1,0 +1,144 @@
+{{!-- PART: browser – Monster browser (filters + scrollable list) --}}
+<div class="dsencounter-browser">
+  <header class="dsencounter-browser-header">
+    <h3>{{localize "DSENCOUNTER.Browser.Title"}}</h3>
+    <button type="button" class="dsencounter-refresh-btn" data-action="refreshIndex"
+            data-tooltip="{{localize "DSENCOUNTER.Browser.Refresh"}}">
+      <i class="fa-solid fa-arrows-rotate"></i>
+    </button>
+  </header>
+
+  {{!-- Search bar --}}
+  <div class="dsencounter-filter-bar">
+    <input type="text" name="monsterSearch" placeholder="{{localize "DSENCOUNTER.Browser.SearchPlaceholder"}}"
+           class="dsencounter-search-input" autocomplete="off" />
+    <button type="button" class="dsencounter-search-clear {{#if searchText}}visible{{/if}}"
+            data-action="clearSearch" aria-label="Clear search">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  {{!-- Organization + Level + Sort dropdowns --}}
+  <div class="dsencounter-filter-row">
+    <select name="orgFilter" class="dsencounter-org-select">
+      {{#each orgOptions}}
+        <option value="{{this.value}}" {{#if (eq this.value ../orgFilter)}}selected{{/if}}>
+          {{this.label}}
+        </option>
+      {{/each}}
+    </select>
+    <select name="levelFilter" class="dsencounter-level-select">
+      {{#each levelFilterOptions}}
+        <option value="{{this.value}}" {{#if (eq this.value ../levelFilter)}}selected{{/if}}>
+          {{this.label}}
+        </option>
+      {{/each}}
+    </select>
+    <select name="sortOrder" class="dsencounter-sort-select">
+      {{#each sortOptions}}
+        <option value="{{this.value}}" {{#if (eq this.value ../sortOrder)}}selected{{/if}}>
+          {{this.label}}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Role filter chips + input --}}
+  <div class="dsencounter-filter-row">
+    <div class="dsencounter-role-chips">
+      {{#each roleChips}}
+        <span class="dsencounter-chip">
+          {{this.label}}
+          <button type="button" class="dsencounter-chip-x" data-action="removeRoleFilter"
+                  data-role="{{this.value}}">×</button>
+        </span>
+      {{/each}}
+    </div>
+    <select name="roleSearch" class="dsencounter-role-select">
+      <option value="">{{localize "DSENCOUNTER.Filter.AddRole"}}</option>
+      {{#each availableRoles}}
+        <option value="{{this.value}}">{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Keyword filter chips + input --}}
+  <div class="dsencounter-filter-row">
+    <div class="dsencounter-role-chips">
+      {{#each keywordChips}}
+        <span class="dsencounter-chip dsencounter-chip-keyword">
+          {{this.label}}
+          <button type="button" class="dsencounter-chip-x" data-action="removeKeywordFilter"
+                  data-keyword="{{this.value}}">×</button>
+        </span>
+      {{/each}}
+    </div>
+    <select name="keywordSearch" class="dsencounter-role-select">
+      <option value="">{{localize "DSENCOUNTER.Filter.AddKeyword"}}</option>
+      {{#each availableKeywords}}
+        <option value="{{this.value}}">{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Source filter chips + input --}}
+  <div class="dsencounter-filter-row">
+    <div class="dsencounter-role-chips">
+      {{#each sourceChips}}
+        <span class="dsencounter-chip dsencounter-chip-source">
+          {{this.label}}
+          <button type="button" class="dsencounter-chip-x" data-action="removeSourceFilter"
+                  data-source="{{this.value}}">×</button>
+        </span>
+      {{/each}}
+    </div>
+    {{#if availableSources.length}}
+      <select name="sourceSearch" class="dsencounter-role-select">
+        <option value="">{{localize "DSENCOUNTER.Filter.AddSource"}}</option>
+        {{#each availableSources}}
+          <option value="{{this.value}}">{{this.label}}</option>
+        {{/each}}
+      </select>
+    {{/if}}
+  </div>
+
+  {{!-- Monster list --}}
+  <div class="dsencounter-browser-list">
+    {{#each monsters}}
+      <div class="dsencounter-monster-row {{#if this.levelWarning}}dsencounter-level-{{this.levelWarning}}{{/if}}"
+           draggable="true" data-action="addMonster" data-uuid="{{this.uuid}}">
+        <div class="dsencounter-monster-left">
+          <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+            <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+            <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                    data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+              <i class="fa-solid fa-book-open"></i>
+            </button>
+          </div>
+          <span class="dsencounter-monster-name">
+            {{this.name}}
+            {{#if (and this.orgLabel this.roleLabel)}}
+              <span class="dsencounter-monster-role">({{this.orgLabel}} / {{this.roleLabel}})</span>
+            {{else if this.roleLabel}}
+              <span class="dsencounter-monster-role">({{this.roleLabel}})</span>
+            {{else if this.orgLabel}}
+              <span class="dsencounter-monster-role">({{this.orgLabel}})</span>
+            {{/if}}
+          </span>
+        </div>
+        <div class="dsencounter-monster-right">
+          {{#if this.levelWarning}}<span class="dsencounter-danger-icon">☠️</span>{{/if}}
+          <span class="dsencounter-monster-level">{{this.level}}</span>
+          <span class="dsencounter-monster-ev">(EV {{this.ev}})</span>
+        </div>
+      </div>
+    {{else}}
+      <p class="dsencounter-empty">{{localize "DSENCOUNTER.Browser.NoResults"}}</p>
+    {{/each}}
+    {{#if isCapped}}
+      <div class="dsencounter-scroll-sentinel">
+        <p class="dsencounter-capped-msg">{{localize "DSENCOUNTER.Browser.ShowingResults" total=totalMatches limit=displayLimit}}</p>
+      </div>
+    {{/if}}
+  </div>
+</div>

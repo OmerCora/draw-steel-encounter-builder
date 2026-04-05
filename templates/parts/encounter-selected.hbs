@@ -1,0 +1,142 @@
+{{!-- PART: selected – Selected monsters, progress bar, groups --}}
+<div class="dsencounter-selected">
+  <header class="dsencounter-selected-header">
+    <h3>{{localize "DSENCOUNTER.Selected.Title"}}</h3>
+    <span class="dsencounter-ev-total">
+      {{localize "DSENCOUNTER.Selected.TotalEV"}}: <strong>{{totalEV}}</strong>
+    </span>
+  </header>
+
+  {{!-- EV Progress bar --}}
+  <div class="dsencounter-progress-container">
+    <div class="dsencounter-progress-bar">
+      {{!-- Orange zone: 0 to min --}}
+      <div class="dsencounter-progress-zone dsencounter-zone-under"
+           style="width: {{progressBar.minPct}}%"></div>
+      {{!-- Green zone: min to max --}}
+      <div class="dsencounter-progress-zone dsencounter-zone-good"
+           style="width: {{math progressBar.maxPct '-' progressBar.minPct}}%"></div>
+    </div>
+    {{!-- Current EV marker (hidden at zero) --}}
+    {{#if totalEV}}
+    <div class="dsencounter-progress-marker dsencounter-marker-{{progressBar.zone}}"
+         style="left: {{progressBar.currentPct}}%">
+      <span class="dsencounter-marker-label">{{totalEV}}</span>
+    </div>
+    {{/if}}
+    {{!-- Labels --}}
+    <div class="dsencounter-progress-labels">
+      <span style="left: 0%">0</span>
+      <span style="left: {{progressBar.minPct}}%">{{budget.min}}</span>
+      {{#unless progressBar.isInfinite}}
+        <span style="left: {{progressBar.maxPct}}%">{{budget.max}}</span>
+      {{/unless}}
+    </div>
+  </div>
+
+  {{!-- Selected monster list --}}
+  <div class="dsencounter-selected-list">
+
+    {{!-- Ungrouped section --}}
+    <div class="dsencounter-group-section dsencounter-drop-zone" data-group-id="">
+      <div class="dsencounter-group-header">
+        <span>{{localize "DSENCOUNTER.Selected.Ungrouped"}}</span>
+      </div>
+      {{#each ungrouped}}
+        <div class="dsencounter-selected-row" draggable="true"
+             data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
+          <div class="dsencounter-monster-left">
+            <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+              <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+              <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                      data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+                <i class="fa-solid fa-book-open"></i>
+              </button>
+            </div>
+            <span class="dsencounter-monster-name">
+              {{this.name}}
+              {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
+            </span>
+          </div>
+          <div class="dsencounter-monster-right">
+            <span class="dsencounter-monster-level">{{this.level}} (EV {{this.ev}})</span>
+            <div class="dsencounter-row-actions">
+              <button type="button" class="dsencounter-btn-icon" data-action="incrementMonster"
+                      data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+              <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger" data-action="decrementMonster"
+                      data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                <i class="fa-solid fa-minus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+
+    {{!-- Groups --}}
+    {{#each groups}}
+      <div class="dsencounter-group-section dsencounter-drop-zone" data-group-id="{{this.id}}">
+        <div class="dsencounter-group-header">
+          <span class="dsencounter-group-name">{{this.name}}</span>
+          <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger"
+                  data-action="deleteGroup" data-group-id="{{this.id}}"
+                  data-tooltip="{{localize "DSENCOUNTER.Action.DeleteGroup"}}">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+        {{#each this.monsters}}
+          <div class="dsencounter-selected-row" draggable="true"
+               data-selection-id="{{this.ids.[0]}}" data-uuid="{{this.uuid}}">
+            <div class="dsencounter-monster-left">
+              <div class="dsencounter-monster-img-wrapper" data-uuid="{{this.uuid}}">
+                <img class="dsencounter-monster-img" src="{{this.img}}" alt="" loading="lazy" />
+                <button type="button" class="dsencounter-preview-btn" data-action="previewMonster"
+                        data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Preview"}}">
+                  <i class="fa-solid fa-book-open"></i>
+                </button>
+              </div>
+              <span class="dsencounter-monster-name">
+                {{this.name}}
+                {{#if (gt this.count 1)}} <span class="dsencounter-count">(×{{this.count}})</span>{{/if}}
+              </span>
+              {{!-- Squad captain toggle: only for non-minion, non-mount in a group --}}
+              {{#unless (eq this.organization "minion")}}
+              {{#unless (eq this.role "mount")}}
+                <button type="button" class="dsencounter-btn-icon dsencounter-btn-captain
+                        {{#if this.isSquadCaptain}}active{{/if}}"
+                        data-action="toggleCaptain" data-selection-id="{{this.ids.[0]}}"
+                        data-tooltip="{{localize "DSENCOUNTER.Action.ToggleCaptain"}}">
+                  <i class="fa-solid fa-crown"></i>
+                </button>
+              {{/unless}}
+              {{/unless}}
+            </div>
+            <div class="dsencounter-monster-right">
+              {{#if this.isSquadCaptain}}<span class="dsencounter-captain-badge">⚔️</span>{{/if}}
+              <span class="dsencounter-monster-level">{{this.level}} (EV {{this.ev}})</span>
+              <div class="dsencounter-row-actions">
+                <button type="button" class="dsencounter-btn-icon" data-action="incrementMonster"
+                        data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Add"}}">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+                <button type="button" class="dsencounter-btn-icon dsencounter-btn-danger" data-action="decrementMonster"
+                        data-uuid="{{this.uuid}}" data-tooltip="{{localize "DSENCOUNTER.Action.Decrement"}}">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        {{else}}
+          <p class="dsencounter-empty-group">{{localize "DSENCOUNTER.Selected.DropHere"}}</p>
+        {{/each}}
+      </div>
+    {{/each}}
+
+    {{!-- Create Group button --}}
+    <button type="button" class="dsencounter-create-group-btn" data-action="createGroup">
+      <i class="fa-solid fa-plus"></i> {{localize "DSENCOUNTER.Action.CreateGroup"}}
+    </button>
+  </div>
+</div>

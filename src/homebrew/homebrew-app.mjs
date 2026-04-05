@@ -5,6 +5,7 @@
 
 import { MODULE_ID } from "../config.mjs";
 import { MonsterWizardApp } from "./monster-wizard.mjs";
+import { AbilityWizardApp } from "./ability-wizard.mjs";
 
 export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
@@ -38,6 +39,7 @@ export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationM
     },
     actions: {
       openMonsterWizard: HomebrewApp.#onOpenMonsterWizard,
+      openAbilityWizard: HomebrewApp.#onOpenAbilityWizard,
     },
   };
 
@@ -59,7 +61,7 @@ export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationM
         { key: "monster", icon: "fa-solid fa-dragon", label: game.i18n.localize("DSENCOUNTER.Homebrew.Monster"), enabled: true, action: "openMonsterWizard" },
         { key: "animal", icon: "fa-solid fa-paw", label: game.i18n.localize("DSENCOUNTER.Homebrew.Animal"), enabled: false },
         { key: "retainer", icon: "fa-solid fa-shield-halved", label: game.i18n.localize("DSENCOUNTER.Homebrew.Retainer"), enabled: false },
-        { key: "ability", icon: "fa-solid fa-bolt", label: game.i18n.localize("DSENCOUNTER.Homebrew.Ability"), enabled: false },
+        { key: "ability", icon: "fa-solid fa-bolt", label: game.i18n.localize("DSENCOUNTER.Homebrew.Ability"), enabled: true, action: "openAbilityWizard" },
       ],
     };
   }
@@ -71,5 +73,10 @@ export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationM
   static #onOpenMonsterWizard() {
     this.close();
     MonsterWizardApp.open();
+  }
+
+  static #onOpenAbilityWizard() {
+    this.close();
+    AbilityWizardApp.open();
   }
 }

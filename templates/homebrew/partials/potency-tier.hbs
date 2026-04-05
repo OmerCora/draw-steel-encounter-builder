@@ -1,0 +1,11 @@
+{{!-- Potency tier row partial – used inside ability effect cards.
+     Expected: id, tier ("1"/"2"/"3"), charOptions, value, placeholder --}}
+<div class="dshomebrew-effect-tier dshomebrew-tier-potency">
+  <span class="dshomebrew-tier-label">{{#if (eq tier "1")}}≤11{{else if (eq tier "2")}}12–16{{else}}17+{{/if}}</span>
+  <select data-effect-id="{{id}}" data-effect-field="tier{{tier}}PotencyChar">
+    {{#each charOptions}}
+    <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+    {{/each}}
+  </select>
+  <input type="text" data-effect-id="{{id}}" data-effect-field="tier{{tier}}PotencyValue" value="{{value}}" placeholder="{{placeholder}}" class="dshomebrew-potency-input">
+</div>

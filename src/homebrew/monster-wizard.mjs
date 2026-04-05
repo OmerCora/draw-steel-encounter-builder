@@ -9,69 +9,14 @@ import {
   calcHighestChar, getSuggestedCharArray, computeAllStats,
 } from "./monster-calc.mjs";
 import { createMonsterActor } from "./monster-create.mjs";
-
-const CHAR_KEYS = ["might", "agility", "reason", "intuition", "presence"];
-const CHAR_ABBREVS = ["MGT", "AGI", "REA", "INT", "PRS"];
-const DISTANCE_TYPES = [
-  "melee", "ranged", "meleeRanged", "aura", "burst", "cube", "line", "wall", "special", "self",
-];
-
-const CONDITION_TYPES = [
-  "bleeding", "dazed", "frightened", "grabbed", "prone",
-  "restrained", "slowed", "surprised", "taunted", "weakened",
-];
-
-const EFFECT_TYPES = ["damage", "applied", "forced", "other", "resource"];
-
-const CONDITION_END_TYPES = ["", "turn", "save", "encounter", "respite"];
-
-const FORCED_MOVEMENT_TYPES = ["push", "pull", "slide"];
-
-const RESOURCE_TYPES = ["surge", "heroic", "epic"];
-
-const TARGET_TYPES = [
-  "creature", "object", "creatureObject", "enemy", "enemyObject",
-  "ally", "selfAlly", "self", "selfOrAlly", "selfOrCreature", "special",
-];
-
-/** Target types that display a numeric value field. */
-const TARGET_HAS_VALUE = new Set([
-  "creature", "object", "creatureObject", "enemy", "enemyObject", "ally", "selfAlly",
-]);
-
-const DISTANCE_LABELS = {
-  melee: "Melee",
-  ranged: "Ranged",
-  meleeRanged: "Melee / Ranged",
-  aura: "Aura",
-  burst: "Burst",
-  cube: "Cube",
-  line: "Line",
-  wall: "Wall",
-  special: "Special",
-  self: "Self",
-};
-
-/**
- * Per-distance-type field definitions matching the system AbilityDistance schema.
- * Each entry lists { label, dataKey } for the primary/secondary/tertiary fields.
- */
-const DISTANCE_FIELDS = {
-  melee:       [{ label: "Melee", dataKey: "distancePrimary" }],
-  ranged:      [{ label: "Ranged", dataKey: "distancePrimary" }],
-  meleeRanged: [{ label: "Melee", dataKey: "distancePrimary" }, { label: "Ranged", dataKey: "distanceSecondary" }],
-  aura:        [{ label: "Aura", dataKey: "distancePrimary" }],
-  burst:       [{ label: "Burst", dataKey: "distancePrimary" }],
-  cube:        [{ label: "Length", dataKey: "distancePrimary" }, { label: "Ranged", dataKey: "distanceSecondary" }],
-  line:        [{ label: "Length", dataKey: "distancePrimary" }, { label: "Width", dataKey: "distanceSecondary" }, { label: "Ranged", dataKey: "distanceTertiary" }],
-  wall:        [{ label: "Squares", dataKey: "distancePrimary" }, { label: "Ranged", dataKey: "distanceSecondary" }],
-  special:     [],
-  self:        [],
-};
-
-const DAMAGE_TYPES = [
-  "acid", "cold", "corruption", "fire", "holy", "lightning", "poison", "psychic", "sonic",
-];
+import {
+  CHAR_KEYS, CHAR_ABBREVS, DAMAGE_TYPES, TARGET_HAS_VALUE,
+  ABILITY_TYPES, ABILITY_TYPE_ORDER,
+  createAbilityData, createEffectData,
+  prepareAbilityEditorContext, prepareAbilityPreviewContext,
+  bindAbilityEditorEvents, flushAbilityFocusedInput,
+  buildAbilityItemData,
+} from "./ability-data.mjs";
 
 const MOVEMENT_TYPES = ["walk", "fly", "swim", "climb", "burrow", "teleport"];
 
@@ -129,8 +74,11 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       removeImmunity: MonsterWizardApp.#onRemoveImmunity,
       addWeakness: MonsterWizardApp.#onAddWeakness,
       removeWeakness: MonsterWizardApp.#onRemoveWeakness,
-      addSignatureAbility: MonsterWizardApp.#onAddSignatureAbility,
-      removeSignatureAbility: MonsterWizardApp.#onRemoveSignatureAbility,
+      addAbility: MonsterWizardApp.#onAddAbility,
+      addMalice: MonsterWizardApp.#onAddMalice,
+      addFeature: MonsterWizardApp.#onAddFeature,
+      removeFeature: MonsterWizardApp.#onRemoveFeature,
+      removeAbility: MonsterWizardApp.#onRemoveAbility,
       addEffect: MonsterWizardApp.#onAddEffect,
       removeEffect: MonsterWizardApp.#onRemoveEffect,
     },
@@ -154,19 +102,10 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     roleKey: "brute",
     orgKey: "platoon",
     characteristics: [2, 1, 0, -1, -1],
-    // Signature ability
-    hasSignature: false,
-    abilityName: "",
-    abilityKeywords: [],
-    distanceType: "melee",
-    distancePrimary: 1,
-    distanceSecondary: 1,
-    distanceTertiary: 1,
-    targetType: "creature",
-    targetValue: 1,
-    targetCustom: "",
-    powerRollChars: [],
-    powerRollEffects: [],   // Array of effect objects (see _createEffect)
+    // Abilities (signature, regular, malice)
+    abilities: [],
+    // Features (traits)
+    features: [],
     // Monster stats
     extraStamina: false,
     speed: 5,
@@ -174,8 +113,8 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     movementTypes: ["walk"],
     sizeCombo: "1M",
     keywords: [],
-    immunities: [],   // [{ type: "fire", value: 5 }, ...]
-    weaknesses: [],   // [{ type: "fire", value: 5 }, ...]
+    immunities: [],
+    weaknesses: [],
   };
 
   /* -------------------------------------------------- */
@@ -189,69 +128,61 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
   }
 
   /**
-   * Create a new power roll effect data object.
+   * Find an ability in the abilities array by ID.
    */
-  static createEffect(type = "damage") {
-    return {
-      id: foundry.utils.randomID(),
-      type,
-      name: "",
-      // Damage
-      tier1Value: "",
-      tier2Value: "",
-      tier3Value: "",
-      damageTypes: [],
-      // Applied (per-tier)
-      tier1Condition: "dazed",
-      tier2Condition: "dazed",
-      tier3Condition: "dazed",
-      tier1ConditionEnd: "",
-      tier2ConditionEnd: "",
-      tier3ConditionEnd: "",
-      // Forced (per-tier)
-      tier1Movement: "push",
-      tier2Movement: "push",
-      tier3Movement: "push",
-      tier1Distance: 1,
-      tier2Distance: 2,
-      tier3Distance: 3,
-      // Other
-      tier1Display: "",
-      tier2Display: "",
-      tier3Display: "",
-      // Resource
-      resourceType: "surge",
-      tier1Amount: 1,
-      tier2Amount: 2,
-      tier3Amount: 3,
-    };
+  #getAbility(id) {
+    return this.#data.abilities.find(a => a.id === id);
   }
 
   /* -------------------------------------------------- */
   /*  Rendering                                         */
   /* -------------------------------------------------- */
 
+  /**
+   * Override render to support debounced rendering.
+   * When {debounce: true} is passed, the render is delayed so that
+   * click events on buttons can fire before the DOM is replaced.
+   * Non-debounced calls cancel any pending debounced render.
+   */
+  render(options = {}) {
+    const { debounce, ...renderOptions } = options;
+    if (debounce) {
+      clearTimeout(this._renderTimeout);
+      this._renderTimeout = setTimeout(() => {
+        this._renderTimeout = null;
+        super.render(renderOptions);
+      }, 50);
+      return;
+    }
+    clearTimeout(this._renderTimeout);
+    this._renderTimeout = null;
+    return super.render(renderOptions);
+  }
+
   async _prepareContext() {
     const d = this.#data;
     const sizeInfo = this.#parseSizeCombo();
+
+    // Use first ability's target count for stats (if any)
+    const firstAbility = d.abilities[0];
+    const targetCount = firstAbility && TARGET_HAS_VALUE.has(firstAbility.targetType)
+      ? (firstAbility.targetValue ?? 1) : 1;
 
     const stats = computeAllStats({
       level: d.level,
       roleKey: d.roleKey,
       orgKey: d.orgKey,
       characteristics: d.characteristics,
-      targetCount: TARGET_HAS_VALUE.has(d.targetType) ? (d.targetValue ?? 1) : 1,
+      targetCount,
       extraStamina: d.extraStamina,
     });
     const highestChar = calcHighestChar(d.level, d.orgKey);
 
-    // Level options (1-11)
     const levelOptions = Array.from({ length: 11 }, (_, i) => ({
       value: i + 1,
       selected: (i + 1) === d.level,
     }));
 
-    // Role & org options
     const roleOptions = Object.keys(ROLE_TABLE).map(k => ({
       key: k,
       label: k === "noRole" ? "No Role" : k.charAt(0).toUpperCase() + k.slice(1),
@@ -263,13 +194,11 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       selected: k === d.orgKey,
     }));
 
-    // Size options
     const sizeOptions = SIZE_OPTIONS.map(o => ({
       ...o,
       selected: o.value === d.sizeCombo,
     }));
 
-    // Characteristics
     const chars = CHAR_KEYS.map((key, i) => ({
       key,
       label: key.charAt(0).toUpperCase() + key.slice(1),
@@ -277,97 +206,6 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       value: d.characteristics[i],
     }));
 
-    // Distance type options
-    const distanceOptions = DISTANCE_TYPES.map(dt => ({
-      key: dt,
-      label: DISTANCE_LABELS[dt] ?? dt,
-      selected: dt === d.distanceType,
-    }));
-
-    // Dynamic distance value fields for current distance type
-    const distanceFields = (DISTANCE_FIELDS[d.distanceType] ?? []).map(f => ({
-      label: f.label,
-      dataKey: f.dataKey,
-      value: d[f.dataKey] ?? 1,
-    }));
-
-    // Target type options
-    const targetTypeOptions = TARGET_TYPES.map(t => ({
-      key: t,
-      label: game.i18n.localize(`DSENCOUNTER.Homebrew.TargetType.${t}`),
-      selected: t === d.targetType,
-    }));
-    const targetHasValue = TARGET_HAS_VALUE.has(d.targetType);
-
-    // Power roll characteristic options
-    const charSelectOptions = CHAR_KEYS.map(k => ({
-      key: k,
-      label: k.charAt(0).toUpperCase() + k.slice(1),
-      selected: d.powerRollChars.includes(k),
-    }));
-
-    // Build power roll effect editor data
-    const effects = d.powerRollEffects.map(eff => {
-      const e = { ...eff };
-      e.typeOptions = EFFECT_TYPES.map(t => ({
-        key: t,
-        label: game.i18n.localize(`DSENCOUNTER.Homebrew.EffectType.${t}`),
-        selected: t === eff.type,
-      }));
-      e.isDamage = eff.type === "damage";
-      e.isApplied = eff.type === "applied";
-      e.isForced = eff.type === "forced";
-      e.isOther = eff.type === "other";
-      e.isResource = eff.type === "resource";
-
-      // Damage: show auto values as placeholders
-      if (e.isDamage) {
-        e.tier1Placeholder = String(stats.tierDamage[1]);
-        e.tier2Placeholder = String(stats.tierDamage[2]);
-        e.tier3Placeholder = String(stats.tierDamage[3]);
-        e.damageTypeOptions = DAMAGE_TYPES.map(dt => ({
-          key: dt,
-          label: dt.charAt(0).toUpperCase() + dt.slice(1),
-          selected: (eff.damageTypes ?? []).includes(dt),
-        }));
-      }
-      // Applied (per-tier)
-      if (e.isApplied) {
-        for (const tier of [1, 2, 3]) {
-          e[`tier${tier}ConditionOptions`] = CONDITION_TYPES.map(c => ({
-            key: c,
-            label: c.charAt(0).toUpperCase() + c.slice(1),
-            selected: c === eff[`tier${tier}Condition`],
-          }));
-          e[`tier${tier}ConditionEndOptions`] = CONDITION_END_TYPES.map(ce => ({
-            key: ce,
-            label: ce ? game.i18n.localize(`DSENCOUNTER.Homebrew.ConditionEnd.${ce}`) : game.i18n.localize("DSENCOUNTER.Homebrew.ConditionEnd.none"),
-            selected: ce === eff[`tier${tier}ConditionEnd`],
-          }));
-        }
-      }
-      // Forced (per-tier)
-      if (e.isForced) {
-        for (const tier of [1, 2, 3]) {
-          e[`tier${tier}MovementOptions`] = FORCED_MOVEMENT_TYPES.map(m => ({
-            key: m,
-            label: game.i18n.localize(`DSENCOUNTER.Homebrew.Movement.${m}`),
-            selected: m === eff[`tier${tier}Movement`],
-          }));
-        }
-      }
-      // Resource
-      if (e.isResource) {
-        e.resourceTypeOptions = RESOURCE_TYPES.map(rt => ({
-          key: rt,
-          label: game.i18n.localize(`DSENCOUNTER.Homebrew.ResourceType.${rt}`),
-          selected: rt === eff.resourceType,
-        }));
-      }
-      return e;
-    });
-
-    // All damage types (for immunities/weaknesses dropdown)
     const damageTypeOptionsAll = [{ key: "all", label: "All" }].concat(
       DAMAGE_TYPES.map(dt => ({
         key: dt,
@@ -375,116 +213,72 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       }))
     );
 
-    // Movement type options
     const movementTypeOptions = MOVEMENT_TYPES.map(mt => ({
       key: mt,
       label: mt.charAt(0).toUpperCase() + mt.slice(1),
       selected: d.movementTypes.includes(mt),
     }));
 
-    // Monster keyword options
     const keywordOptions = MONSTER_KEYWORDS.map(kw => ({
       key: kw,
       label: kw.charAt(0).toUpperCase() + kw.slice(1),
       selected: d.keywords.includes(kw),
     }));
 
-    // Computed display strings for the stat block preview
+    // Build ability editor + preview contexts
+    const abilityEditors = d.abilities.map(ability => {
+      const editorOpts = { stats, showRemove: true };
+      if (ability.isMalice) {
+        editorOpts.lockType = true;
+      } else {
+        editorOpts.excludeTypes = ["none"];
+      }
+      return prepareAbilityEditorContext(ability, editorOpts);
+    });
+    const abilityPreviews = d.abilities.map(ability =>
+      prepareAbilityPreviewContext(ability, stats)
+    );
+
+    // Build feature contexts
+    const featureEditors = d.features.map(f => ({ ...f }));
+    const featurePreviews = d.features.map(f => ({
+      id: f.id,
+      name: f.name,
+      description: f.description,
+    }));
+
+    // Group abilities by type for right panel display (in defined order)
+    const abilityGroups = [];
+    for (const typeKey of ABILITY_TYPE_ORDER) {
+      const items = abilityPreviews.filter(a => a.abilityType === typeKey);
+      if (items.length > 0) {
+        // Sort signature abilities above non-signature within the same group
+        items.sort((a, b) => {
+          const aS = a.abilityCategory === "signature" ? 0 : 1;
+          const bS = b.abilityCategory === "signature" ? 0 : 1;
+          return aS - bS;
+        });
+        abilityGroups.push({
+          typeKey,
+          typeLabel: game.i18n.localize(`DSENCOUNTER.Homebrew.AbilityType.${typeKey}`),
+          abilities: items,
+        });
+      }
+    }
+
+    // Computed display strings for stat block preview
     const roleLabel = d.roleKey === "noRole" ? "" : d.roleKey.charAt(0).toUpperCase() + d.roleKey.slice(1);
     const orgLabel = d.orgKey.charAt(0).toUpperCase() + d.orgKey.slice(1);
     const keywordLabels = d.keywords.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(", ");
-    const sizeDisplay = sizeInfo.size === 1
-      ? `${sizeInfo.size}${sizeInfo.letter}`
-      : `${sizeInfo.size}`;
+    const sizeDisplay = sizeInfo.size === 1 ? `${sizeInfo.size}${sizeInfo.letter}` : `${sizeInfo.size}`;
 
-    // Movement label (excluding "walk" as it's the default)
     const nonWalkMovement = d.movementTypes.filter(m => m !== "walk");
     const movementLabel = nonWalkMovement.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(", ");
 
-    // Immunity/weakness display
-    const immunityDisplay = d.immunities
-      .map(i => `${i.type} ${i.value}`)
-      .join(", ");
-    const weaknessDisplay = d.weaknesses
-      .map(w => `${w.type} ${w.value}`)
-      .join(", ");
-
-    // Signature ability preview strings
-    const sigCharLabel = d.powerRollChars.length > 0
-      ? d.powerRollChars.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(" or ")
-      : "—";
-
-    // Build distance label from per-type fields
-    let sigDistanceLabel = "";
-    const fields = DISTANCE_FIELDS[d.distanceType] ?? [];
-    if (fields.length === 0) {
-      sigDistanceLabel = DISTANCE_LABELS[d.distanceType] ?? d.distanceType;
-    } else if (d.distanceType === "meleeRanged") {
-      sigDistanceLabel = `Melee ${d.distancePrimary} / Ranged ${d.distanceSecondary}`;
-    } else if (d.distanceType === "line") {
-      sigDistanceLabel = `Line ${d.distancePrimary}×${d.distanceSecondary}, Ranged ${d.distanceTertiary}`;
-    } else {
-      sigDistanceLabel = fields.map(f => `${f.label} ${d[f.dataKey] ?? 1}`).join(", ");
-    }
-    const sigAbilityKeywordLabels = d.abilityKeywords.length > 0
-      ? d.abilityKeywords.map(k => k.charAt(0).toUpperCase() + k.slice(1)).join(", ")
-      : "";
-
-    // Build per-tier preview lines from all effects
-    const tierLines = { 1: [], 2: [], 3: [] };
-    for (const eff of d.powerRollEffects) {
-      if (eff.type === "damage") {
-        const v1 = eff.tier1Value || stats.tierDamage[1];
-        const v2 = eff.tier2Value || stats.tierDamage[2];
-        const v3 = eff.tier3Value || stats.tierDamage[3];
-        const typeLabel = (eff.damageTypes ?? []).length > 0
-          ? " " + eff.damageTypes.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("/")
-          : "";
-        tierLines[1].push(`${v1}${typeLabel} damage`);
-        tierLines[2].push(`${v2}${typeLabel} damage`);
-        tierLines[3].push(`${v3}${typeLabel} damage`);
-      } else if (eff.type === "applied") {
-        for (const tier of [1, 2, 3]) {
-          const cond = eff[`tier${tier}Condition`];
-          const end = eff[`tier${tier}ConditionEnd`];
-          const label = cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : "";
-          const endLabel = end ? ` (${game.i18n.localize(`DSENCOUNTER.Homebrew.ConditionEnd.${end}`)})` : "";
-          if (label) tierLines[tier].push(label + endLabel);
-        }
-      } else if (eff.type === "forced") {
-        for (const tier of [1, 2, 3]) {
-          const dir = eff[`tier${tier}Movement`];
-          const dirLabel = dir ? dir.charAt(0).toUpperCase() + dir.slice(1) : "Push";
-          tierLines[tier].push(`${dirLabel} ${eff[`tier${tier}Distance`]}`);
-        }
-      } else if (eff.type === "other") {
-        if (eff.tier1Display) tierLines[1].push(eff.tier1Display);
-        if (eff.tier2Display) tierLines[2].push(eff.tier2Display);
-        if (eff.tier3Display) tierLines[3].push(eff.tier3Display);
-      } else if (eff.type === "resource") {
-        const rtLabel = game.i18n.localize(`DSENCOUNTER.Homebrew.ResourceType.${eff.resourceType}`);
-        tierLines[1].push(`Gain ${eff.tier1Amount} ${rtLabel}`);
-        tierLines[2].push(`Gain ${eff.tier2Amount} ${rtLabel}`);
-        tierLines[3].push(`Gain ${eff.tier3Amount} ${rtLabel}`);
-      }
-    }
-    const sigTierPreview = {
-      1: tierLines[1].join("; "),
-      2: tierLines[2].join("; "),
-      3: tierLines[3].join("; "),
-    };
-    const hasEffects = d.powerRollEffects.length > 0;
+    const immunityDisplay = d.immunities.map(i => `${i.type} ${i.value}`).join(", ");
+    const weaknessDisplay = d.weaknesses.map(w => `${w.type} ${w.value}`).join(", ");
 
     const isMinion = d.orgKey === "minion";
-
-    // Build target label for preview
-    let sigTargetLabel;
-    if (d.targetCustom) {
-      sigTargetLabel = d.targetCustom;
-    } else {
-      const tLabel = game.i18n.localize(`DSENCOUNTER.Homebrew.TargetType.${d.targetType}`);
-      sigTargetLabel = TARGET_HAS_VALUE.has(d.targetType) ? `${d.targetValue ?? 1} ${tLabel}` : tLabel;
-    }
 
     return {
       data: d,
@@ -495,18 +289,10 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       roleOptions,
       orgOptions,
       sizeOptions,
-      distanceOptions,
-      distanceFields,
-      targetTypeOptions,
-      targetHasValue,
       damageTypeOptionsAll,
       movementTypeOptions,
       keywordOptions,
-      charSelectOptions,
-      effects,
       suggestedChars: getSuggestedCharArray(d.level, d.orgKey),
-      hasSignature: d.hasSignature,
-      showSignatureEditor: d.hasSignature,
       roleLabel,
       orgLabel,
       keywordLabels,
@@ -515,12 +301,13 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       immunityDisplay,
       weaknessDisplay,
       isMinion,
-      sigCharLabel,
-      sigDistanceLabel,
-      sigAbilityKeywordLabels,
-      sigTierPreview,
-      sigTargetLabel,
-      hasEffects,
+      abilityEditors,
+      abilityPreviews,
+      abilityGroups,
+      hasAbilities: d.abilities.length > 0,
+      featureEditors,
+      featurePreviews,
+      hasFeatures: d.features.length > 0,
     };
   }
 
@@ -552,42 +339,50 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     leftPanel?.addEventListener("scroll", saveScroll);
     rightPanel?.addEventListener("scroll", saveScroll);
 
-    // Standard form inputs
-    html.querySelectorAll("input[type='text'], input[type='number'], select:not([multiple])").forEach(el => {
+    // Monster-level form inputs (exclude anything inside ability editors)
+    html.querySelectorAll("input[type='text'][data-field], input[type='number'][data-field], select[data-field]").forEach(el => {
+      if (el.closest("[data-ability-id]")) return; // handled by ability editor
       if (el.closest(".dshomebrew-tag-select")) return;
-      if (el.dataset.effectId) return; // handled by effect handler
       el.addEventListener("change", this.#onFieldChange.bind(this));
     });
 
     // Checkbox fields (extraStamina)
     html.querySelectorAll("input[type='checkbox'][data-field]").forEach(el => {
+      if (el.closest("[data-ability-id]")) return;
+      if (el.closest(".dshomebrew-tag-select")) return;
       el.addEventListener("change", this.#onFieldChange.bind(this));
     });
 
-    // Tag select toggles (keywords, movement types, damage types)
+    // Monster-level tag selects (keywords, movementTypes)
     html.querySelectorAll(".dshomebrew-tag-select").forEach(container => {
+      if (container.closest("[data-ability-id]")) return; // handled by ability editor
       container.querySelectorAll("input[type='checkbox']").forEach(cb => {
         cb.addEventListener("change", this.#onTagChange.bind(this));
       });
-    });
-
-    // Effect-level field inputs (within effect cards)
-    html.querySelectorAll("[data-effect-id]").forEach(el => {
-      if (el.dataset.action) return; // skip action buttons
-      if (el.closest(".dshomebrew-tag-select")) return; // handled above
-      if (el.tagName === "INPUT" || el.tagName === "SELECT") {
-        el.addEventListener("change", this.#onEffectFieldChange.bind(this));
-      }
     });
 
     // Immunity/weakness inline inputs
     html.querySelectorAll("[data-field^='immunities-'], [data-field^='weaknesses-']").forEach(el => {
       el.addEventListener("change", this.#onDmgEntryChange.bind(this));
     });
+
+    // Bind ability editor events for each ability section
+    const getAbility = (id) => this.#getAbility(id);
+    const onRender = () => this.render({ debounce: true });
+    html.querySelectorAll("[data-ability-id]").forEach(container => {
+      bindAbilityEditorEvents(container, getAbility, onRender);
+    });
+
+    // Feature editor inputs
+    html.querySelectorAll(".dshomebrew-feature-editor input[data-feature-field], .dshomebrew-feature-editor textarea[data-feature-field]").forEach(el => {
+      el.addEventListener("change", this.#onFeatureFieldChange.bind(this));
+    });
   }
 
-  #onFieldChange(event) {
-    const el = event.currentTarget;
+  /**
+   * Apply a monster-level field's value from a DOM element to #data without re-rendering.
+   */
+  #applyFieldValue(el) {
     const field = el.dataset.field;
     if (!field) return;
 
@@ -604,7 +399,6 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
         break;
       case "orgKey":
         d.orgKey = el.value;
-        // Leader and Solo don't use roles — auto-set to No Role
         if ((d.orgKey === "leader" || d.orgKey === "solo") && d.roleKey !== "noRole") {
           d.roleKey = "noRole";
         }
@@ -617,30 +411,6 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
         d.characteristics[idx] = Number(el.value) || 0;
         break;
       }
-      case "abilityName":
-        d.abilityName = el.value;
-        break;
-      case "distanceType":
-        d.distanceType = el.value;
-        break;
-      case "distancePrimary":
-        d.distancePrimary = Math.max(1, Number(el.value) || 1);
-        break;
-      case "distanceSecondary":
-        d.distanceSecondary = Math.max(1, Number(el.value) || 1);
-        break;
-      case "distanceTertiary":
-        d.distanceTertiary = Math.max(1, Number(el.value) || 1);
-        break;
-      case "targetType":
-        d.targetType = el.value;
-        break;
-      case "targetValue":
-        d.targetValue = Math.max(1, Number(el.value) || 1);
-        break;
-      case "targetCustom":
-        d.targetCustom = el.value;
-        break;
       case "extraStamina":
         d.extraStamina = el.checked;
         break;
@@ -651,67 +421,11 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
         d.stability = Math.max(0, Number(el.value) || 0);
         break;
     }
-
-    this.render();
   }
 
-  #onEffectFieldChange(event) {
-    const el = event.currentTarget;
-    const effectId = el.dataset.effectId;
-    const field = el.dataset.effectField;
-    if (!effectId || !field) return;
-
-    const eff = this.#data.powerRollEffects.find(e => e.id === effectId);
-    if (!eff) return;
-
-    switch (field) {
-      case "type":
-        eff.type = el.value;
-        break;
-      case "name":
-        eff.name = el.value;
-        break;
-      case "tier1Value":
-      case "tier2Value":
-      case "tier3Value":
-        eff[field] = el.value;
-        break;
-      case "tier1Condition":
-      case "tier2Condition":
-      case "tier3Condition":
-        eff[field] = el.value;
-        break;
-      case "tier1ConditionEnd":
-      case "tier2ConditionEnd":
-      case "tier3ConditionEnd":
-        eff[field] = el.value;
-        break;
-      case "tier1Movement":
-      case "tier2Movement":
-      case "tier3Movement":
-        eff[field] = el.value;
-        break;
-      case "tier1Distance":
-      case "tier2Distance":
-      case "tier3Distance":
-        eff[field] = Math.max(0, Number(el.value) || 0);
-        break;
-      case "tier1Display":
-      case "tier2Display":
-      case "tier3Display":
-        eff[field] = el.value;
-        break;
-      case "resourceType":
-        eff.resourceType = el.value;
-        break;
-      case "tier1Amount":
-      case "tier2Amount":
-      case "tier3Amount":
-        eff[field] = Math.max(0, Number(el.value) || 0);
-        break;
-    }
-
-    this.render();
+  #onFieldChange(event) {
+    this.#applyFieldValue(event.currentTarget);
+    this.render({ debounce: true });
   }
 
   #onTagChange(event) {
@@ -722,29 +436,55 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
 
     const selected = Array.from(container.querySelectorAll("input[type='checkbox']:checked"))
       .map(el => el.value);
-
-    // Check if this is inside an effect card
-    const effectId = container.dataset.effectId;
-    if (effectId) {
-      const eff = this.#data.powerRollEffects.find(e => e.id === effectId);
-      if (eff) eff[field] = selected;
-    } else {
-      this.#data[field] = selected;
-    }
-    this.render();
+    this.#data[field] = selected;
+    this.render({ debounce: true });
   }
 
-  #onDmgEntryChange(event) {
-    const el = event.currentTarget;
-    const field = el.dataset.field; // e.g. "immunities-type" or "weaknesses-value"
+  /**
+   * Apply an immunity/weakness entry field value without re-rendering.
+   */
+  #applyDmgEntryValue(el) {
+    const field = el.dataset.field;
     const idx = Number(el.dataset.index);
-    const [listKey, prop] = field.split("-"); // "immunities", "type"
+    const [listKey, prop] = field.split("-");
 
     if (!this.#data[listKey]?.[idx]) return;
     if (prop === "type") this.#data[listKey][idx].type = el.value;
     else if (prop === "value") this.#data[listKey][idx].value = Math.max(0, Number(el.value) || 0);
+  }
 
-    this.render();
+  #onDmgEntryChange(event) {
+    this.#applyDmgEntryValue(event.currentTarget);
+    this.render({ debounce: true });
+  }
+
+  /**
+   * Capture the value of any currently focused input/select into #data
+   * so that action handlers get up-to-date state without requiring a blur first.
+   */
+  #flushFocusedInput() {
+    const focused = this.element?.querySelector("input:focus, select:focus");
+    if (!focused) return;
+
+    // Check if it's inside an ability editor
+    const abilityContainer = focused.closest("[data-ability-id]");
+    if (abilityContainer) {
+      flushAbilityFocusedInput(abilityContainer, (id) => this.#getAbility(id));
+      return;
+    }
+
+    // Check if it's inside a feature editor
+    const featureContainer = focused.closest(".dshomebrew-feature-editor");
+    if (featureContainer) {
+      this.#applyFeatureFieldValue(focused);
+      return;
+    }
+
+    if (focused.dataset.field?.includes("-")) {
+      this.#applyDmgEntryValue(focused);
+    } else if (focused.dataset.field) {
+      this.#applyFieldValue(focused);
+    }
   }
 
   /* -------------------------------------------------- */
@@ -779,28 +519,82 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     this.render();
   }
 
-  static #onAddSignatureAbility() {
-    this.#data.hasSignature = true;
+  static #onAddAbility() {
+    this.#data.abilities.push(createAbilityData({}));
     this.render();
   }
 
-  static #onRemoveSignatureAbility() {
-    this.#data.hasSignature = false;
+  static #onAddMalice() {
+    this.#data.abilities.push(createAbilityData({
+      abilityType: "none",
+      distanceType: "special",
+      targetType: "special",
+      isMalice: true,
+    }));
     this.render();
   }
 
-  static #onAddEffect() {
-    this.#data.powerRollEffects.push(MonsterWizardApp.createEffect("damage"));
+  static #onAddFeature() {
+    this.#data.features.push({
+      id: foundry.utils.randomID(),
+      name: "",
+      description: "",
+    });
     this.render();
+  }
+
+  static #onRemoveFeature(event, target) {
+    const featureId = target.dataset.featureId;
+    this.#data.features = this.#data.features.filter(f => f.id !== featureId);
+    this.render();
+  }
+
+  /**
+   * Apply a feature field value from a DOM element.
+   */
+  #applyFeatureFieldValue(el) {
+    const featureId = el.closest(".dshomebrew-feature-editor")?.dataset.featureId;
+    const field = el.dataset.featureField;
+    if (!featureId || !field) return;
+    const feature = this.#data.features.find(f => f.id === featureId);
+    if (!feature) return;
+    feature[field] = el.value;
+  }
+
+  #onFeatureFieldChange(event) {
+    this.#applyFeatureFieldValue(event.currentTarget);
+    this.render({ debounce: true });
+  }
+
+  static #onRemoveAbility(event, target) {
+    const abilityId = target.dataset.abilityId;
+    this.#data.abilities = this.#data.abilities.filter(a => a.id !== abilityId);
+    this.render();
+  }
+
+  static #onAddEffect(event, target) {
+    const abilityId = target.closest("[data-ability-id]")?.dataset.abilityId;
+    const ability = this.#getAbility(abilityId);
+    if (ability) {
+      ability.powerRollEffects.push(createEffectData("damage"));
+      this.render();
+    }
   }
 
   static #onRemoveEffect(event, target) {
-    const effectId = target.dataset.effectId;
-    this.#data.powerRollEffects = this.#data.powerRollEffects.filter(e => e.id !== effectId);
-    this.render();
+    const abilityId = target.closest("[data-ability-id]")?.dataset.abilityId;
+    const ability = this.#getAbility(abilityId);
+    if (ability) {
+      const effectId = target.dataset.effectId;
+      ability.powerRollEffects = ability.powerRollEffects.filter(e => e.id !== effectId);
+      this.render();
+    }
   }
 
   static async #onCreateMonster() {
+    // Flush any pending field value from a focused input before creating
+    this.#flushFocusedInput();
+
     const d = this.#data;
     if (!d.name?.trim()) {
       ui.notifications.warn(game.i18n.localize("DSENCOUNTER.Homebrew.Warn.NoName"));
@@ -809,14 +603,21 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
 
     const sizeOpt = SIZE_OPTIONS.find(o => o.value === d.sizeCombo) ?? { size: 1, letter: "M" };
 
+    // Use first ability's target count for stats (if any)
+    const firstAbility = d.abilities[0];
+    const targetCount = firstAbility && TARGET_HAS_VALUE.has(firstAbility.targetType)
+      ? (firstAbility.targetValue ?? 1) : 1;
+
     const stats = computeAllStats({
       level: d.level,
       roleKey: d.roleKey,
       orgKey: d.orgKey,
       characteristics: d.characteristics,
-      targetCount: TARGET_HAS_VALUE.has(d.targetType) ? (d.targetValue ?? 1) : 1,
+      targetCount,
       extraStamina: d.extraStamina,
     });
+
+    const highestChar = calcHighestChar(d.level, d.orgKey);
 
     // Merge size info into wizard data for createMonsterActor
     const wizardData = {
@@ -825,7 +626,30 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
       sizeLetter: sizeOpt.letter,
     };
 
-    const actor = await createMonsterActor(wizardData, stats);
+    // Build ability items from the abilities array
+    const abilityItems = d.abilities.map(ability => {
+      // Auto-select power roll characteristics if user didn't pick any
+      let rollChars;
+      if (ability.powerRollChars?.length > 0) {
+        rollChars = new Set(ability.powerRollChars);
+      } else {
+        rollChars = new Set(CHAR_KEYS.filter((_, i) => d.characteristics[i] === highestChar));
+      }
+      return buildAbilityItemData(ability, stats, { rollChars });
+    });
+
+    // Build feature items
+    const featureItems = d.features
+      .filter(f => f.name?.trim())
+      .map(f => ({
+        name: f.name,
+        type: "feature",
+        system: {
+          description: { value: f.description ? `<p>${f.description}</p>` : "", director: "" },
+        },
+      }));
+
+    const actor = await createMonsterActor(wizardData, stats, [...featureItems, ...abilityItems]);
     if (actor) {
       ui.notifications.info(game.i18n.format("DSENCOUNTER.Homebrew.Created", { name: actor.name }));
       actor.sheet.render(true);

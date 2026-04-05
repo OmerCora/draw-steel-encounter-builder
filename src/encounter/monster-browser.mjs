@@ -18,6 +18,7 @@ import { SYSTEM_ID } from "../config.mjs";
  * @property {string} orgLabel   Localized organization label
  * @property {string} source     Unique source key (pack ID or "world")
  * @property {string} sourceLabel Display label for the source
+ * @property {Set<string>} keywords  Monster keyword keys (abyssal, beast, etc.)
  */
 
 /** Pack IDs that should be selected by default in the source filter. */
@@ -30,6 +31,7 @@ const INDEX_FIELDS = [
   "system.monster.level",
   "system.monster.role",
   "system.monster.organization",
+  "system.monster.keywords",
   "img",
 ];
 
@@ -80,6 +82,7 @@ export async function loadMonsterIndex() {
           orgLabel: organizations[org]?.label ?? "",
           source: packId,
           sourceLabel,
+          keywords: new Set(monster.keywords ?? []),
         });
       }
       return packEntries;
@@ -114,6 +117,7 @@ export async function loadMonsterIndex() {
       orgLabel: organizations[org]?.label ?? "",
       source: "world",
       sourceLabel: game.i18n.localize("DSENCOUNTER.Source.World"),
+      keywords: new Set(monster.keywords ?? []),
     });
   }
 
@@ -154,11 +158,12 @@ export function preloadMonsterIndex() {
  * @param {Set<string>} [filters.roles]    Role keys to include (OR logic)
  * @param {string} [filters.organization]  Organization key to match (exact, or "" for all)
  * @param {Set<string>} [filters.sources]  Source keys to include (OR logic). Empty set = all.
+ * @param {Set<string>} [filters.keywords]  Keyword keys to include (AND logic). Empty set = all.
  * @param {number} [filters.level]         Level to match (0 = all, -1 = use levelRange)
  * @param {{min: number, max: number, soloMax: number}} [filters.levelRange] Used when level === -1
  * @returns {MonsterEntry[]}
  */
-export function filterMonsters(index, { search = "", roles = new Set(), organization = "", sources = new Set(), level = 0, levelRange = null } = {}) {
+export function filterMonsters(index, { search = "", roles = new Set(), organization = "", sources = new Set(), keywords = new Set(), level = 0, levelRange = null } = {}) {
   const needle = search.toLowerCase().trim();
 
   return index.filter((m) => {
@@ -166,6 +171,13 @@ export function filterMonsters(index, { search = "", roles = new Set(), organiza
     if (roles.size > 0 && !roles.has(m.role) && !roles.has(m.organization)) return false;
     if (organization && m.organization !== organization) return false;
     if (sources.size > 0 && !sources.has(m.source)) return false;
+    if (keywords.size > 0) {
+      let hasAny = false;
+      for (const kw of keywords) {
+        if (m.keywords.has(kw)) { hasAny = true; break; }
+      }
+      if (!hasAny) return false;
+    }
     if (level > 0 && m.level !== level) return false;
     if (level === -1 && levelRange) {
       const max = m.organization === "solo" ? levelRange.soloMax : levelRange.max;
@@ -208,4 +220,12 @@ export function getRoleOptions() {
  */
 export function getOrganizationOptions() {
   return Object.entries(ds.CONFIG.monsters.organizations).map(([value, { label }]) => ({ value, label }));
+}
+
+/**
+ * Return keyword options from the Draw Steel CONFIG.
+ * @returns {{value: string, label: string}[]}
+ */
+export function getKeywordOptions() {
+  return Object.entries(ds.CONFIG.monsters.keywords).map(([value, { label }]) => ({ value, label }));
 }

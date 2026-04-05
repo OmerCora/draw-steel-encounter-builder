@@ -32,6 +32,7 @@
 
     "Filter": {
       "AddRole": "— Add role filter —",
+      "AddKeyword": "— Add keyword filter —",
       "AddSource": "— Add source —",
       "AllOrganizations": "All Organizations",
       "AllLevels": "All Levels",
@@ -97,6 +98,7 @@
     "Homebrew": {
       "WindowTitle": "Homebrew Builder",
       "WizardTitle": "Monster Builder",
+      "AbilityWizardTitle": "Ability Builder",
       "LandingTitle": "Homebrew Builder",
       "LandingSubtitle": "Create custom creatures for your encounters.",
       "OpenHomebrew": "Homebrew",
@@ -112,7 +114,8 @@
         "Traits": "Traits",
         "Defenses": "Defenses",
         "Characteristics": "Characteristics",
-        "Abilities": "Abilities and Features"
+        "Abilities": "Abilities and Features",
+        "AbilityDetails": "Ability Details"
       },
 
       "Field": {
@@ -140,21 +143,60 @@
         "PowerRollChars": "Power Roll Characteristics",
         "EffectName": "Effect Name",
         "EffectType": "Effect Type",
+        "EffectAfter": "Effect (After Power Roll)",
+        "Potency": "Potency",
+        "DisplayText": "Display Text",
+        "AbilityKeywords": "Ability Keywords",
         "Condition": "Condition",
         "ConditionEnd": "Ends",
         "Movement": "Direction",
         "Distance": "Distance",
         "ResourceType": "Resource Type",
         "Amount": "Amount",
-        "DisplayText": "Text"
+        "DisplayText": "Text",
+        "AbilityCategory": "Category",
+        "AbilityType": "Action Type",
+        "ResourceCost": "R. Cost",
+        "Trigger": "Trigger",
+        "Description": "Description"
       },
 
       "Placeholder": {
         "Name": "e.g. Shadow Lurker",
         "AbilityName": "e.g. Shadow Strike",
         "EffectName": "e.g. Grabbed",
+        "EffectNameDamage": "e.g. Shadow Damage",
+        "EffectNameApplied": "e.g. Weakened",
+        "EffectNameForced": "e.g. Knockback",
+        "EffectNameOther": "e.g. Teleport",
+        "EffectNameResource": "e.g. Dark Surge",
+        "EffectAfter": "e.g. The target is teleported 5 squares",
+        "Trigger": "e.g. A creature within reach makes an attack",
+        "FeatureName": "e.g. Crafty",
+        "FeatureDescription": "Describe the feature...",
         "TierDisplay": "Describe effect...",
+        "DisplayApplied": "e.g. {{potency}} bleeding (save ends)",
+        "DisplayForced": "e.g. {{forced}}",
+        "DisplayOther": "Describe effect...",
         "TargetCustom": "Custom label"
+      },
+
+      "AbilityCategory": {
+        "heroic": "Heroic",
+        "freeStrike": "Free Strike",
+        "signature": "Signature",
+        "villain": "Villain"
+      },
+
+      "AbilityType": {
+        "action": "Main Action",
+        "maneuver": "Maneuver",
+        "freeManeuver": "Free Maneuver",
+        "triggered": "Triggered Action",
+        "freeTriggered": "Free Triggered Action",
+        "move": "Move Action",
+        "none": "No Action (Malice)",
+        "villain": "Villain Action"
       },
 
       "EffectType": {
@@ -183,6 +225,11 @@
         "surge": "Surge",
         "heroic": "Heroic Resource",
         "epic": "Epic Resource"
+      },
+
+      "Potency": {
+        "Default": "Default",
+        "None": "None"
       },
 
       "TargetType": {
@@ -215,6 +262,7 @@
       "AddEffect": "Add Effect",
       "ApplySuggested": "Apply Suggested",
       "CreateMonster": "Create Monster",
+      "CreateAbility": "Create Ability",
 
       "Preview": {
         "Level": "Level",
@@ -229,11 +277,13 @@
         "Weaknesses": "Weaknesses",
         "Characteristics": "Characteristics",
         "Effect": "Effect",
+        "EffectAfter": "Effect (After Power Roll)",
         "Damage": "damage",
         "Push": "push",
         "Pull": "pull",
         "Slide": "slide",
-        "Gain": "Gain"
+        "Gain": "Gain",
+        "Features": "Features"
       },
 
       "Stat": {
@@ -250,8 +300,10 @@
       },
 
       "Created": "Monster created: {name}",
+      "AbilityCreated": "Ability created: {name}",
       "Warn": {
-        "NoName": "Please enter a name for the monster."
+        "NoName": "Please enter a name for the monster.",
+        "NoAbilityName": "Please enter a name for the ability."
       }
     }
   }

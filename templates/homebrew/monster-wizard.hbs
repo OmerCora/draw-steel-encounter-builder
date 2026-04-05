@@ -177,270 +177,41 @@
         <h3 class="dshomebrew-section-title">{{localize "DSENCOUNTER.Homebrew.Section.Abilities"}}</h3>
 
         <div class="dshomebrew-ability-actions">
-          <button type="button" class="dshomebrew-btn-ability" data-action="addSignatureAbility" {{#if hasSignature}}disabled title="{{localize "DSENCOUNTER.Homebrew.Hint.OneSignature"}}"{{/if}}>
-            <i class="fa-solid fa-star"></i> {{localize "DSENCOUNTER.Homebrew.AddSignature"}}
-          </button>
-          <button type="button" class="dshomebrew-btn-ability" disabled title="{{localize "DSENCOUNTER.Homebrew.ComingSoon"}}">
+          <button type="button" class="dshomebrew-btn-ability" data-action="addAbility">
             <i class="fa-solid fa-bolt"></i> {{localize "DSENCOUNTER.Homebrew.AddAbility"}}
           </button>
-          <button type="button" class="dshomebrew-btn-ability" disabled title="{{localize "DSENCOUNTER.Homebrew.ComingSoon"}}">
+          <button type="button" class="dshomebrew-btn-ability" data-action="addFeature">
             <i class="fa-solid fa-scroll"></i> {{localize "DSENCOUNTER.Homebrew.AddTrait"}}
           </button>
-          <button type="button" class="dshomebrew-btn-ability" disabled title="{{localize "DSENCOUNTER.Homebrew.ComingSoon"}}">
+          <button type="button" class="dshomebrew-btn-ability" data-action="addMalice">
             <i class="fa-solid fa-skull"></i> {{localize "DSENCOUNTER.Homebrew.AddMalice"}}
           </button>
         </div>
 
-        {{!-- Signature ability inline editor (shown after clicking Add Signature) --}}
-        {{#if showSignatureEditor}}
-        <div class="dshomebrew-sig-editor">
-          <div class="dshomebrew-sig-header">
-            <h4><i class="fa-solid fa-star"></i> {{localize "DSENCOUNTER.Homebrew.AddSignature"}}</h4>
-            <button type="button" class="dshomebrew-btn-icon" data-action="removeSignatureAbility" title="Remove">
+        {{!-- Ability editors (one per added ability) --}}
+        {{#each abilityEditors}}
+        {{> "modules/draw-steel-encounter-builder/templates/homebrew/partials/ability-editor.hbs" }}
+        {{/each}}
+
+        {{!-- Feature editors --}}
+        {{#each featureEditors}}
+        <div class="dshomebrew-feature-editor" data-feature-id="{{id}}">
+          <div class="dshomebrew-ability-editor-header">
+            <h4><i class="fa-solid fa-scroll"></i> {{localize "DSENCOUNTER.Homebrew.AddTrait"}}</h4>
+            <button type="button" class="dshomebrew-btn-icon" data-action="removeFeature" data-feature-id="{{id}}" title="Remove">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
-
           <div class="dshomebrew-field">
-            <label>{{localize "DSENCOUNTER.Homebrew.Field.AbilityName"}}</label>
-            <input type="text" data-field="abilityName" value="{{data.abilityName}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.AbilityName"}}">
+            <label>{{localize "DSENCOUNTER.Homebrew.Field.Name"}}</label>
+            <input type="text" data-feature-field="name" value="{{name}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.FeatureName"}}">
           </div>
-
-          <div class="dshomebrew-field-row">
-            <div class="dshomebrew-field">
-              <label>{{localize "DSENCOUNTER.Homebrew.Field.DistanceType"}}</label>
-              <select data-field="distanceType">
-                {{#each distanceOptions}}
-                <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                {{/each}}
-              </select>
-            </div>
-            {{#each distanceFields}}
-            <div class="dshomebrew-field dshomebrew-field-sm">
-              <label>{{label}}</label>
-              <input type="number" data-field="{{dataKey}}" value="{{value}}" min="1">
-            </div>
-            {{/each}}
-          </div>
-
-          <div class="dshomebrew-field-row">
-            <div class="dshomebrew-field">
-              <label>{{localize "DSENCOUNTER.Homebrew.Field.TargetType"}}</label>
-              <select data-field="targetType">
-                {{#each targetTypeOptions}}
-                <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                {{/each}}
-              </select>
-            </div>
-            {{#if targetHasValue}}
-            <div class="dshomebrew-field dshomebrew-field-sm">
-              <label>{{localize "DSENCOUNTER.Homebrew.Field.TargetValue"}}</label>
-              <input type="number" data-field="targetValue" value="{{data.targetValue}}" min="1">
-            </div>
-            {{/if}}
-            <div class="dshomebrew-field">
-              <label>{{localize "DSENCOUNTER.Homebrew.Field.TargetCustom"}}</label>
-              <input type="text" data-field="targetCustom" value="{{data.targetCustom}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.TargetCustom"}}">
-            </div>
-          </div>
-
           <div class="dshomebrew-field">
-            <label>{{localize "DSENCOUNTER.Homebrew.Field.PowerRollChars"}}</label>
-            <div class="dshomebrew-tag-select" data-field="powerRollChars">
-              {{#each charSelectOptions}}
-              <label class="dshomebrew-tag {{#if selected}}selected{{/if}}">
-                <input type="checkbox" value="{{key}}" {{#if selected}}checked{{/if}}>
-                <span>{{label}}</span>
-              </label>
-              {{/each}}
-            </div>
-          </div>
-
-          {{!-- Power Roll Effects --}}
-          <div class="dshomebrew-effects-section">
-            <label class="dshomebrew-effects-label">Power Roll Effects</label>
-            {{#each effects}}
-            <div class="dshomebrew-effect-card" data-effect-index="{{@index}}">
-              <div class="dshomebrew-effect-header">
-                <select data-effect-id="{{id}}" data-effect-field="type">
-                  {{#each typeOptions}}
-                  <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                  {{/each}}
-                </select>
-                <input type="text" data-effect-id="{{id}}" data-effect-field="name" value="{{name}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.EffectName"}}">
-                <button type="button" class="dshomebrew-btn-icon" data-action="removeEffect" data-effect-id="{{id}}" title="Remove">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-
-              {{!-- Damage fields --}}
-              {{#if isDamage}}
-              <div class="dshomebrew-effect-body">
-                <div class="dshomebrew-effect-tiers">
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">≤11</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier1Value" value="{{tier1Value}}" placeholder="{{tier1Placeholder}}">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">12–16</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier2Value" value="{{tier2Value}}" placeholder="{{tier2Placeholder}}">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">17+</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier3Value" value="{{tier3Value}}" placeholder="{{tier3Placeholder}}">
-                  </div>
-                </div>
-                <div class="dshomebrew-tag-select" data-field="damageTypes" data-effect-id="{{id}}">
-                  {{#each damageTypeOptions}}
-                  <label class="dshomebrew-tag {{#if selected}}selected{{/if}}">
-                    <input type="checkbox" value="{{key}}" {{#if selected}}checked{{/if}}>
-                    <span>{{label}}</span>
-                  </label>
-                  {{/each}}
-                </div>
-              </div>
-              {{/if}}
-
-              {{!-- Applied fields (per-tier) --}}
-              {{#if isApplied}}
-              <div class="dshomebrew-effect-body">
-                <div class="dshomebrew-effect-tiers dshomebrew-effect-tiers-text">
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-applied">
-                    <span class="dshomebrew-tier-label">≤11</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier1Condition">
-                      {{#each tier1ConditionOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <select data-effect-id="{{id}}" data-effect-field="tier1ConditionEnd">
-                      {{#each tier1ConditionEndOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                  </div>
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-applied">
-                    <span class="dshomebrew-tier-label">12–16</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier2Condition">
-                      {{#each tier2ConditionOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <select data-effect-id="{{id}}" data-effect-field="tier2ConditionEnd">
-                      {{#each tier2ConditionEndOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                  </div>
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-applied">
-                    <span class="dshomebrew-tier-label">17+</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier3Condition">
-                      {{#each tier3ConditionOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <select data-effect-id="{{id}}" data-effect-field="tier3ConditionEnd">
-                      {{#each tier3ConditionEndOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                  </div>
-                </div>
-              </div>
-              {{/if}}
-
-              {{!-- Forced movement fields (per-tier) --}}
-              {{#if isForced}}
-              <div class="dshomebrew-effect-body">
-                <div class="dshomebrew-effect-tiers dshomebrew-effect-tiers-text">
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-forced">
-                    <span class="dshomebrew-tier-label">≤11</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier1Movement">
-                      {{#each tier1MovementOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier1Distance" value="{{tier1Distance}}" min="0">
-                  </div>
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-forced">
-                    <span class="dshomebrew-tier-label">12–16</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier2Movement">
-                      {{#each tier2MovementOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier2Distance" value="{{tier2Distance}}" min="0">
-                  </div>
-                  <div class="dshomebrew-effect-tier dshomebrew-tier-forced">
-                    <span class="dshomebrew-tier-label">17+</span>
-                    <select data-effect-id="{{id}}" data-effect-field="tier3Movement">
-                      {{#each tier3MovementOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier3Distance" value="{{tier3Distance}}" min="0">
-                  </div>
-                </div>
-              </div>
-              {{/if}}
-
-              {{!-- Other fields --}}
-              {{#if isOther}}
-              <div class="dshomebrew-effect-body">
-                <div class="dshomebrew-effect-tiers dshomebrew-effect-tiers-text">
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">≤11</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier1Display" value="{{tier1Display}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.TierDisplay"}}">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">12–16</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier2Display" value="{{tier2Display}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.TierDisplay"}}">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">17+</span>
-                    <input type="text" data-effect-id="{{id}}" data-effect-field="tier3Display" value="{{tier3Display}}" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.TierDisplay"}}">
-                  </div>
-                </div>
-              </div>
-              {{/if}}
-
-              {{!-- Resource fields --}}
-              {{#if isResource}}
-              <div class="dshomebrew-effect-body">
-                <div class="dshomebrew-field-row">
-                  <div class="dshomebrew-field">
-                    <label>{{localize "DSENCOUNTER.Homebrew.Field.ResourceType"}}</label>
-                    <select data-effect-id="{{id}}" data-effect-field="resourceType">
-                      {{#each resourceTypeOptions}}
-                      <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-                      {{/each}}
-                    </select>
-                  </div>
-                </div>
-                <div class="dshomebrew-effect-tiers">
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">≤11</span>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier1Amount" value="{{tier1Amount}}" min="0">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">12–16</span>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier2Amount" value="{{tier2Amount}}" min="0">
-                  </div>
-                  <div class="dshomebrew-effect-tier">
-                    <span class="dshomebrew-tier-label">17+</span>
-                    <input type="number" data-effect-id="{{id}}" data-effect-field="tier3Amount" value="{{tier3Amount}}" min="0">
-                  </div>
-                </div>
-              </div>
-              {{/if}}
-            </div>
-            {{/each}}
-
-            <button type="button" class="dshomebrew-btn-small" data-action="addEffect">
-              <i class="fa-solid fa-plus"></i> {{localize "DSENCOUNTER.Homebrew.AddEffect"}}
-            </button>
+            <label>{{localize "DSENCOUNTER.Homebrew.Field.Description"}}</label>
+            <textarea data-feature-field="description" rows="3" placeholder="{{localize "DSENCOUNTER.Homebrew.Placeholder.FeatureDescription"}}">{{description}}</textarea>
           </div>
         </div>
-        {{/if}}
+        {{/each}}
       </section>
 
     </div>{{!-- .dshomebrew-input-panel --}}
@@ -527,41 +298,82 @@
 
         <div class="dshomebrew-sb-divider"></div>
 
-        {{!-- Signature Ability --}}
-        {{#if showSignatureEditor}}
-        <div class="dshomebrew-sb-ability">
-          <div class="dshomebrew-sb-ability-header">
-            <span class="dshomebrew-sb-ability-name">
-              <i class="fa-solid fa-star"></i>
-              {{#if data.abilityName}}{{data.abilityName}}{{else}}{{localize "DSENCOUNTER.Homebrew.Placeholder.AbilityName"}}{{/if}}
+        {{!-- Features (displayed above abilities) --}}
+        {{#if hasFeatures}}
+        <div class="dshomebrew-sb-feature-group">
+          <div class="dshomebrew-sb-group-label">{{localize "DSENCOUNTER.Homebrew.Preview.Features"}}</div>
+          {{#each featurePreviews}}
+          <div class="dshomebrew-sb-feature">
+            <span class="dshomebrew-sb-feature-name">
+              <i class="fa-solid fa-scroll"></i>
+              {{#if name}}{{name}}{{else}}<em>{{localize "DSENCOUNTER.Homebrew.Placeholder.FeatureName"}}</em>{{/if}}
             </span>
-            <span class="dshomebrew-sb-ability-cost">◆</span>
+            {{#if description}}
+            <div class="dshomebrew-sb-feature-desc">{{description}}</div>
+            {{/if}}
           </div>
-          <div class="dshomebrew-sb-ability-meta">
-            {{#if sigAbilityKeywordLabels}}Keywords: {{sigAbilityKeywordLabels}}<br>{{/if}}
-            Distance: {{sigDistanceLabel}} ◆ Target: {{sigTargetLabel}}
-          </div>
-          <div class="dshomebrew-sb-ability-roll">
-            Power Roll + {{sigCharLabel}}
-          </div>
-          {{#if hasEffects}}
-          <div class="dshomebrew-sb-tiers">
-            <div class="dshomebrew-sb-tier">
-              <span class="dshomebrew-sb-tier-label">≤11:</span>
-              <span>{{sigTierPreview.[1]}}</span>
-            </div>
-            <div class="dshomebrew-sb-tier">
-              <span class="dshomebrew-sb-tier-label">12–16:</span>
-              <span>{{sigTierPreview.[2]}}</span>
-            </div>
-            <div class="dshomebrew-sb-tier">
-              <span class="dshomebrew-sb-tier-label">17+:</span>
-              <span>{{sigTierPreview.[3]}}</span>
-            </div>
-          </div>
-          {{/if}}
+          {{/each}}
         </div>
         {{/if}}
+
+        {{!-- Abilities grouped by type --}}
+        {{#each abilityGroups}}
+        <div class="dshomebrew-sb-ability-group">
+          <div class="dshomebrew-sb-group-label">{{typeLabel}}</div>
+          {{#each abilities}}
+          <div class="dshomebrew-sb-ability">
+            <div class="dshomebrew-sb-ability-header">
+              <span class="dshomebrew-sb-ability-name">
+                {{#if (eq abilityCategory "signature")}}<i class="fa-solid fa-star"></i> {{/if}}
+                {{#if isMalice}}<i class="fa-solid fa-skull"></i> {{/if}}
+                {{#if name}}{{name}}{{else}}{{localize "DSENCOUNTER.Homebrew.Placeholder.AbilityName"}}{{/if}}
+              </span>
+              {{#if resourceCost}}<span class="dshomebrew-sb-ability-cost">{{resourceCost}} Malice</span>{{/if}}
+            </div>
+            {{#if categoryLabel}}
+            <div class="dshomebrew-sb-ability-meta">
+              Category: {{categoryLabel}}
+            </div>
+            {{/if}}
+            {{#if isTriggered}}
+            <div class="dshomebrew-sb-ability-meta">
+              Trigger: {{#if trigger}}{{trigger}}{{else}}<em>—</em>{{/if}}
+            </div>
+            {{/if}}
+            <div class="dshomebrew-sb-ability-meta">
+              {{#if keywordLabels}}Keywords: {{keywordLabels}}<br>{{/if}}
+              Distance: {{distanceLabel}} ◆ Target: {{targetLabel}}
+            </div>
+            {{#if hasPowerRoll}}
+            <div class="dshomebrew-sb-ability-roll">
+              Power Roll + {{charLabel}}
+            </div>
+            {{/if}}
+            {{#if hasEffects}}
+            <div class="dshomebrew-sb-tiers">
+              <div class="dshomebrew-sb-tier">
+                <span class="dshomebrew-sb-tier-label">≤11:</span>
+                <span>{{tierPreview.[1]}}</span>
+              </div>
+              <div class="dshomebrew-sb-tier">
+                <span class="dshomebrew-sb-tier-label">12–16:</span>
+                <span>{{tierPreview.[2]}}</span>
+              </div>
+              <div class="dshomebrew-sb-tier">
+                <span class="dshomebrew-sb-tier-label">17+:</span>
+                <span>{{tierPreview.[3]}}</span>
+              </div>
+            </div>
+            {{/if}}
+            {{#if effectAfter}}
+            <div class="dshomebrew-sb-effect-after">
+              <span class="dshomebrew-sb-label">{{localize "DSENCOUNTER.Homebrew.Preview.EffectAfter"}}:</span> {{effectAfter}}
+            </div>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{/each}}
 
       </div>{{!-- .dshomebrew-statblock --}}
     </div>{{!-- .dshomebrew-preview-panel --}}

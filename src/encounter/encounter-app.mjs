@@ -8,7 +8,7 @@ import {
   calcPartyES, calcBudgetRange, calcHeroES,
   getDifficulty, getRecommendedLevelRange, DIFFICULTIES,
 } from "./encounter-calc.mjs";
-import { loadMonsterIndex, getCachedMonsterIndex, filterMonsters, getRoleOptions, getOrganizationOptions, getSourceOptions, DEFAULT_SOURCE_IDS } from "./monster-browser.mjs";
+import { loadMonsterIndex, getCachedMonsterIndex, filterMonsters, getRoleOptions, getOrganizationOptions, getSourceOptions, getKeywordOptions, DEFAULT_SOURCE_IDS } from "./monster-browser.mjs";
 import { createEncounterJournal } from "./encounter-journal.mjs";
 import { deployEncounter } from "./encounter-deploy.mjs";
 import { HomebrewApp } from "../homebrew/homebrew-app.mjs";
@@ -58,6 +58,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       saveToJournal: EncounterBuilderApp.#onSaveToJournal,
       deployToScene: EncounterBuilderApp.#onDeployToScene,
       removeRoleFilter: EncounterBuilderApp.#onRemoveRoleFilter,
+      removeKeywordFilter: EncounterBuilderApp.#onRemoveKeywordFilter,
       removeSourceFilter: EncounterBuilderApp.#onRemoveSourceFilter,
       refreshIndex: EncounterBuilderApp.#onRefreshIndex,
       clearSearch: EncounterBuilderApp.#onClearSearch,
@@ -69,9 +70,19 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   /* -------------------------------------------------- */
 
   static PARTS = {
-    form: {
-      template: `modules/${MODULE_ID}/templates/encounter-builder.hbs`,
-      scrollable: [".dsencounter-browser-list", ".dsencounter-selected-list"],
+    topBar: {
+      template: `modules/${MODULE_ID}/templates/parts/encounter-topbar.hbs`,
+    },
+    browser: {
+      template: `modules/${MODULE_ID}/templates/parts/encounter-browser.hbs`,
+      scrollable: [".dsencounter-browser-list"],
+    },
+    selected: {
+      template: `modules/${MODULE_ID}/templates/parts/encounter-selected.hbs`,
+      scrollable: [".dsencounter-selected-list"],
+    },
+    actionBar: {
+      template: `modules/${MODULE_ID}/templates/parts/encounter-actionbar.hbs`,
     },
   };
 
@@ -98,6 +109,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   /** Filters for the monster browser. */
   #searchText = "";
   #roleFilters = new Set();
+  #keywordFilters = new Set();
   #orgFilter = "";
   #sourceFilters = new Set();
   #sourceFiltersInitialized = false;
@@ -105,11 +117,17 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   #sortOrder = "ev"; // "ev" (default) or "name"
 
   /** How many monsters to show in the browser at once. Grows via scroll. */
-  #displayLimit = 50;
+  #displayLimit = 30;
 
   /** Cached filtered+sorted monster list for scroll append. */
   #lastFilteredMonsters = [];
   #cachedLevelRange = null;
+
+  /** Cached option arrays (rebuilt only when index changes). */
+  #cachedRoleOptions = null;
+  #cachedKeywordOptions = null;
+  #cachedOrgOptions = null;
+  #cachedSourceOptions = null;
 
   /**
    * Selected monsters.
@@ -128,10 +146,10 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   /** Debounce timer for rendering. */
   #renderDebounce = null;
 
-  /** Queue a debounced render to avoid blocking the main thread. */
-  #debouncedRender(delay = 80) {
+  /** Queue a debounced render. Pass a parts array for selective re-rendering. */
+  #debouncedRender(delay = 80, parts) {
     clearTimeout(this.#renderDebounce);
-    this.#renderDebounce = setTimeout(() => this.render({ force: false }), delay);
+    this.#renderDebounce = setTimeout(() => this.render({ parts }), delay);
   }
 
   /* -------------------------------------------------- */
@@ -143,61 +161,157 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     if (!this.#indexLoaded) {
       this.#monsterIndex = await getCachedMonsterIndex();
       this.#indexLoaded = true;
+      // Build option caches once when index loads
+      this.#cachedRoleOptions = getRoleOptions();
+      this.#cachedKeywordOptions = getKeywordOptions();
+      this.#cachedOrgOptions = getOrganizationOptions();
+      this.#cachedSourceOptions = getSourceOptions(this.#monsterIndex);
     }
 
-    // ── Encounter math ────────────────────────────────────────────────────
+    // Initialize source filters (once, when sources become available)
+    if (!this.#sourceFiltersInitialized) {
+      const allSources = this.#cachedSourceOptions ?? [];
+      if (allSources.length > 0) {
+        this.#sourceFiltersInitialized = true;
+        const validSourceIds = new Set(allSources.map((s) => s.value));
+        const stored = game.settings.get(MODULE_ID, "sourceFilters");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            for (const id of parsed) {
+              if (validSourceIds.has(id)) this.#sourceFilters.add(id);
+            }
+          } catch { /* ignore corrupt data */ }
+        }
+        if (this.#sourceFilters.size === 0) {
+          for (const s of allSources) {
+            if (s.isDefault) this.#sourceFilters.add(s.value);
+          }
+        }
+      }
+    }
+
+    // ── Shared encounter math (cheap arithmetic) ──────────────────────────
     const partyES = calcPartyES(this.#heroLevel, this.#numHeroes, this.#avgVictories);
     const budget = calcBudgetRange(partyES, this.#heroLevel, this.#difficulty);
     const totalEV = this.#calcTotalEV();
-    const currentDifficulty = getDifficulty(totalEV, partyES, this.#heroLevel);
     const levelRange = getRecommendedLevelRange(this.#heroLevel, this.#avgVictories);
+    this.#cachedLevelRange = levelRange;
 
-    // ── Progress bar data ─────────────────────────────────────────────────
-    const progressBar = this.#buildProgressBar(budget, totalEV);
+    return {
+      heroLevel: this.#heroLevel,
+      numHeroes: this.#numHeroes,
+      avgVictories: this.#avgVictories,
+      difficulty: this.#difficulty,
+      difficulties: DIFFICULTIES,
+      levelOptions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      partyES,
+      budget,
+      totalEV,
+      levelRange,
+      hasSelections: this.#selectedMonsters.length > 0,
+    };
+  }
 
-    // ── Filtered monster list ─────────────────────────────────────────────
+  /* -------------------------------------------------- */
+
+  async _preparePartContext(partId, context, options) {
+    context = await super._preparePartContext(partId, context, options);
+
+    switch (partId) {
+      case "browser":
+        return this.#prepareBrowserContext(context);
+      case "selected":
+        return this.#prepareSelectedContext(context);
+      default:
+        return context;
+    }
+  }
+
+  /* -------------------------------------------------- */
+
+  #prepareBrowserContext(context) {
+    const levelRange = this.#cachedLevelRange;
+
+    // ── Filter + sort ─────────────────────────────────────────────────────
     const filteredMonsters = filterMonsters(this.#monsterIndex, {
       search: this.#searchText,
       roles: this.#roleFilters,
       organization: this.#orgFilter,
       sources: this.#sourceFilters,
+      keywords: this.#keywordFilters,
       level: this.#levelFilter,
       levelRange,
     });
 
-    // ── Sort ──────────────────────────────────────────────────────────────
     if (this.#sortOrder === "name") {
       filteredMonsters.sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      // Default: sort by EV ascending, then name
       filteredMonsters.sort((a, b) => a.ev - b.ev || a.name.localeCompare(b.name));
     }
 
-    // Cache for scroll append (avoids re-filtering on scroll)
     this.#lastFilteredMonsters = filteredMonsters;
-    this.#cachedLevelRange = levelRange;
 
-    // ── Limit displayed monsters for performance ──────────────────────────
+    // ── Limit + annotate ──────────────────────────────────────────────────
     const totalMatches = filteredMonsters.length;
     const displayedMonsters = filteredMonsters.slice(0, this.#displayLimit);
-
-    // Annotate with level appropriateness
     for (const m of displayedMonsters) {
-      if (m.organization === "solo") {
-        m.levelWarning = m.level > levelRange.soloMax ? "danger" : "";
-      } else {
-        m.levelWarning = m.level > levelRange.max ? "danger" : "";
-      }
+      const maxLvl = m.organization === "solo" ? levelRange.soloMax : levelRange.max;
+      m.levelWarning = m.level > maxLvl ? "danger" : "";
     }
 
-    // ── Selected monsters aggregated ──────────────────────────────────────
+    // ── Filter UI state ───────────────────────────────────────────────────
+    const allRoles = this.#cachedRoleOptions ?? getRoleOptions();
+    const allSources = this.#cachedSourceOptions ?? getSourceOptions(this.#monsterIndex);
+
+    context.monsters = displayedMonsters;
+    context.totalMatches = totalMatches;
+    context.displayLimit = this.#displayLimit;
+    context.isCapped = totalMatches > this.#displayLimit;
+    context.searchText = this.#searchText;
+    context.roleChips = allRoles.filter((r) => this.#roleFilters.has(r.value));
+    context.availableRoles = allRoles.filter((r) => !this.#roleFilters.has(r.value));
+
+    const allKeywords = this.#cachedKeywordOptions ?? getKeywordOptions();
+    context.keywordChips = allKeywords.filter((k) => this.#keywordFilters.has(k.value));
+    context.availableKeywords = allKeywords.filter((k) => !this.#keywordFilters.has(k.value));
+
+    context.orgFilter = this.#orgFilter;
+    context.orgOptions = [
+      { value: "", label: game.i18n.localize("DSENCOUNTER.Filter.AllOrganizations") },
+      ...(this.#cachedOrgOptions ?? getOrganizationOptions()),
+    ];
+    context.sourceChips = allSources.filter((s) => this.#sourceFilters.has(s.value));
+    context.availableSources = allSources.filter((s) => !this.#sourceFilters.has(s.value));
+    context.levelFilter = this.#levelFilter;
+    context.levelFilterOptions = [
+      { value: 0, label: game.i18n.localize("DSENCOUNTER.Filter.AllLevels") },
+      { value: -1, label: game.i18n.localize("DSENCOUNTER.Filter.SuggestedLevels") },
+      ...Array.from({ length: 11 }, (_, i) => ({ value: i + 1, label: String(i + 1) })),
+    ];
+    context.sortOrder = this.#sortOrder;
+    context.sortOptions = [
+      { value: "ev", label: game.i18n.localize("DSENCOUNTER.Filter.SortByEV") },
+      { value: "name", label: game.i18n.localize("DSENCOUNTER.Filter.SortByName") },
+    ];
+
+    return context;
+  }
+
+  /* -------------------------------------------------- */
+
+  #prepareSelectedContext(context) {
+    const { budget, totalEV } = context;
+    context.currentDifficulty = getDifficulty(totalEV, context.partyES, this.#heroLevel);
+    context.progressBar = this.#buildProgressBar(budget, totalEV);
+
+    // ── Aggregate selected monsters ───────────────────────────────────────
     const ungrouped = this.#selectedMonsters.filter((m) => !m.groupId);
     const groupedData = this.#groups.map((g) => ({
       ...g,
       monsters: this.#selectedMonsters.filter((m) => m.groupId === g.id),
     }));
 
-    // Aggregate duplicate counts for display
     const aggregateList = (list) => {
       const map = new Map();
       for (const m of list) {
@@ -212,119 +326,44 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       return Array.from(map.values());
     };
 
-    const ungroupedAggregated = aggregateList(ungrouped);
-    const groupedAggregated = groupedData.map((g) => ({
+    context.ungrouped = aggregateList(ungrouped);
+    context.groups = groupedData.map((g) => ({
       ...g,
       monsters: aggregateList(g.monsters),
     }));
 
-    // ── Role filter chips ─────────────────────────────────────────────────
-    const allRoles = getRoleOptions();
-    const roleChips = allRoles.filter((r) => this.#roleFilters.has(r.value));
-    const availableRoles = allRoles.filter((r) => !this.#roleFilters.has(r.value));
-
-    // ── Organization dropdown ─────────────────────────────────────────────
-    const orgOptions = [
-      { value: "", label: game.i18n.localize("DSENCOUNTER.Filter.AllOrganizations") },
-      ...getOrganizationOptions(),
-    ];
-
-    // ── Source filter ─────────────────────────────────────────────────────
-    const allSources = getSourceOptions(this.#monsterIndex);
-    const validSourceIds = new Set(allSources.map((s) => s.value));
-    // Load persisted source filters, falling back to defaults
-    if (!this.#sourceFiltersInitialized && allSources.length > 0) {
-      this.#sourceFiltersInitialized = true;
-      const stored = game.settings.get(MODULE_ID, "sourceFilters");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          for (const id of parsed) {
-            if (validSourceIds.has(id)) this.#sourceFilters.add(id);
-          }
-        } catch { /* ignore corrupt data */ }
-      }
-      // If nothing was restored (first run or all persisted sources gone), use defaults
-      if (this.#sourceFilters.size === 0) {
-        for (const s of allSources) {
-          if (s.isDefault) this.#sourceFilters.add(s.value);
-        }
-      }
-    }
-    const sourceChips = allSources.filter((s) => this.#sourceFilters.has(s.value));
-    const availableSources = allSources.filter((s) => !this.#sourceFilters.has(s.value));
-
-    // ── Level filter options ──────────────────────────────────────────────
-    const levelFilterOptions = [
-      { value: 0, label: game.i18n.localize("DSENCOUNTER.Filter.AllLevels") },
-      { value: -1, label: game.i18n.localize("DSENCOUNTER.Filter.SuggestedLevels") },
-      ...Array.from({ length: 11 }, (_, i) => ({ value: i + 1, label: String(i + 1) })),
-    ];
-
-    // ── Sort options ──────────────────────────────────────────────────────
-    const sortOptions = [
-      { value: "ev", label: game.i18n.localize("DSENCOUNTER.Filter.SortByEV") },
-      { value: "name", label: game.i18n.localize("DSENCOUNTER.Filter.SortByName") },
-    ];
-
-    return {
-      // Inputs
-      heroLevel: this.#heroLevel,
-      numHeroes: this.#numHeroes,
-      avgVictories: this.#avgVictories,
-      difficulty: this.#difficulty,
-      difficulties: DIFFICULTIES,
-      levelOptions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-
-      // Computed
-      partyES,
-      budget,
-      totalEV,
-      currentDifficulty,
-      levelRange,
-      progressBar,
-
-      // Browser
-      monsters: displayedMonsters,
-      totalMatches,
-      displayLimit: this.#displayLimit,
-      isCapped: totalMatches > this.#displayLimit,
-      searchText: this.#searchText,
-      roleChips,
-      availableRoles,
-      orgFilter: this.#orgFilter,
-      orgOptions,
-      sourceChips,
-      availableSources,
-      levelFilter: this.#levelFilter,
-      levelFilterOptions,
-      sortOrder: this.#sortOrder,
-      sortOptions,
-
-      // Selected
-      ungrouped: ungroupedAggregated,
-      groups: groupedAggregated,
-      hasSelections: this.#selectedMonsters.length > 0,
-    };
+    return context;
   }
 
   /* -------------------------------------------------- */
 
-  _onRender(_context, _options) {
+  _onRender(_context, options) {
     const html = this.element;
+    const parts = options.parts;
 
-    // ── Input change listeners ────────────────────────────────────────────
+    if (parts.includes("topBar")) this.#setupTopBarListeners(html);
+    if (parts.includes("browser")) this.#setupBrowserListeners(html);
+    if (parts.includes("selected")) this.#setupSelectedListeners(html);
+  }
+
+  /* -------------------------------------------------- */
+  /*  Per-part listener setup                           */
+  /* -------------------------------------------------- */
+
+  #setupTopBarListeners(html) {
     html.querySelector('[name="heroLevel"]')?.addEventListener("change", (e) => {
       this.#heroLevel = Number(e.target.value) || 1;
       game.settings.set(MODULE_ID, "heroLevel", this.#heroLevel);
-      this.#debouncedRender();
+      this.#debouncedRender(80, ["topBar", "browser", "selected"]);
     });
     html.querySelector('[name="difficulty"]')?.addEventListener("change", (e) => {
       this.#difficulty = e.target.value;
-      this.#debouncedRender();
+      this.#debouncedRender(80, ["topBar", "selected"]);
     });
+  }
 
-    // ── Search input (debounced) ──────────────────────────────────────────
+  #setupBrowserListeners(html) {
+    // Search input (debounced)
     const searchInput = html.querySelector('[name="monsterSearch"]');
     if (searchInput) {
       searchInput.value = this.#searchText;
@@ -334,12 +373,12 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         debounce = setTimeout(() => {
           this.#searchText = e.target.value;
           this.#displayLimit = 50;
-          this.#debouncedRender();
+          this.#debouncedRender(80, ["browser"]);
         }, 250);
       });
     }
 
-    // ── Role filter input ─────────────────────────────────────────────────
+    // Role filter input
     const roleInput = html.querySelector('[name="roleSearch"]');
     if (roleInput) {
       roleInput.addEventListener("change", (e) => {
@@ -348,19 +387,33 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
           this.#roleFilters.add(value);
           e.target.value = "";
           this.#displayLimit = 50;
-          this.#debouncedRender();
+          this.#debouncedRender(80, ["browser"]);
         }
       });
     }
 
-    // ── Organization dropdown ─────────────────────────────────────────────
+    // Keyword filter input
+    const keywordInput = html.querySelector('[name="keywordSearch"]');
+    if (keywordInput) {
+      keywordInput.addEventListener("change", (e) => {
+        const value = e.target.value;
+        if (value) {
+          this.#keywordFilters.add(value);
+          e.target.value = "";
+          this.#displayLimit = 50;
+          this.#debouncedRender(80, ["browser"]);
+        }
+      });
+    }
+
+    // Organization dropdown
     html.querySelector('[name="orgFilter"]')?.addEventListener("change", (e) => {
       this.#orgFilter = e.target.value;
       this.#displayLimit = 50;
-      this.#debouncedRender();
+      this.#debouncedRender(80, ["browser"]);
     });
 
-    // ── Source filter input ───────────────────────────────────────────────
+    // Source filter input
     const sourceInput = html.querySelector('[name="sourceSearch"]');
     if (sourceInput) {
       sourceInput.addEventListener("change", (e) => {
@@ -370,26 +423,26 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
           game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
           e.target.value = "";
           this.#displayLimit = 50;
-          this.#debouncedRender();
+          this.#debouncedRender(80, ["browser"]);
         }
       });
     }
 
-    // ── Level filter dropdown ─────────────────────────────────────────────
+    // Level filter dropdown
     html.querySelector('[name="levelFilter"]')?.addEventListener("change", (e) => {
       this.#levelFilter = Number(e.target.value) || 0;
       this.#displayLimit = 50;
-      this.#debouncedRender();
+      this.#debouncedRender(80, ["browser"]);
     });
 
-    // ── Sort dropdown ─────────────────────────────────────────────────────
+    // Sort dropdown
     html.querySelector('[name="sortOrder"]')?.addEventListener("change", (e) => {
       this.#sortOrder = e.target.value;
       this.#displayLimit = 50;
-      this.#debouncedRender();
+      this.#debouncedRender(80, ["browser"]);
     });
 
-    // ── Infinite scroll on browser list ────────────────────────────────────
+    // Infinite scroll on browser list
     const browserList = html.querySelector(".dsencounter-browser-list");
     if (browserList) {
       let scrollCooldown = false;
@@ -408,34 +461,23 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         }
       }, { passive: true });
 
-      // ── Browser row drag (event delegation) ───────────────────────────────
+      // Browser row drag (event delegation)
       browserList.addEventListener("dragstart", (e) => {
         const row = e.target.closest(".dsencounter-monster-row");
         if (!row) return;
         const uuid = row.dataset.uuid;
-        // For dropping into selected section
         e.dataTransfer.setData("application/x-dsencounter-browser", uuid);
-        // For dropping on canvas (Foundry Actor drop)
         e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid, dsencounter: true }));
         e.dataTransfer.effectAllowed = "copyMove";
       });
     }
-
-    // ── Drag & Drop for selected monsters ─────────────────────────────────
-    this.#setupDragDrop(html);
   }
 
-  /* -------------------------------------------------- */
-  /*  Drag and Drop                                     */
-  /* -------------------------------------------------- */
-
-  #setupDragDrop(html) {
+  #setupSelectedListeners(html) {
     // Make selected monster rows draggable
     for (const row of html.querySelectorAll(".dsencounter-selected-row[draggable]")) {
       row.addEventListener("dragstart", (e) => {
-        // Internal MIME type for group reordering
         e.dataTransfer.setData("application/x-dsencounter-selection", row.dataset.selectionId);
-        // Also set Foundry-compatible Actor drag data for canvas drops
         const uuid = row.dataset.uuid;
         if (uuid) {
           e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Actor", uuid, dsencounter: true }));
@@ -461,7 +503,6 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       zone.addEventListener("drop", (e) => {
         e.preventDefault();
         zone.classList.remove("dsencounter-drag-over");
-        // Check for internal group reordering first
         const selectionData = e.dataTransfer.getData("application/x-dsencounter-selection");
         if (selectionData) {
           const selectionId = Number(selectionData);
@@ -469,7 +510,6 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
           this.#moveMonsterToGroup(selectionId, targetGroupId);
           return;
         }
-        // Check for browser monster drop (add to selected)
         const browserUuid = e.dataTransfer.getData("application/x-dsencounter-browser");
         if (browserUuid) {
           const targetGroupId = zone.dataset.groupId ? Number(zone.dataset.groupId) : null;
@@ -479,11 +519,10 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       });
     }
 
-    // Also allow dropping on the selected-list container itself (empty space → ungrouped)
+    // Allow dropping on the selected-list container itself (empty space → ungrouped)
     const selectedList = html.querySelector(".dsencounter-selected-list");
     if (selectedList) {
       selectedList.addEventListener("dragover", (e) => {
-        // Only handle if the drop target is the list itself, not a child drop-zone
         if (e.target.closest(".dsencounter-drop-zone")) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
@@ -572,7 +611,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       // If moving out of a group, clear captain status
       if (!targetGroupId) monster.isSquadCaptain = false;
     }
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected"]);
   }
 
   /**
@@ -596,7 +635,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         isSquadCaptain: false,
       });
     }
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected", "actionBar"]);
   }
 
   /**
@@ -700,23 +739,23 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
   static #onIncrementHeroes() {
     this.#numHeroes += 1;
     game.settings.set(MODULE_ID, "numHeroes", this.#numHeroes);
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["topBar", "selected"]);
   }
 
   static #onDecrementHeroes() {
     this.#numHeroes = Math.max(this.#numHeroes - 1, 1);
     game.settings.set(MODULE_ID, "numHeroes", this.#numHeroes);
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["topBar", "selected"]);
   }
 
   static #onIncrementVictories() {
     this.#avgVictories = Math.min(this.#avgVictories + 2, 16);
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["topBar", "browser", "selected"]);
   }
 
   static #onDecrementVictories() {
     this.#avgVictories = Math.max(this.#avgVictories - 2, 0);
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["topBar", "browser", "selected"]);
   }
 
   static #onAddMonster(event, target) {
@@ -733,7 +772,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     this.#selectedMonsters = this.#selectedMonsters.filter((m) => {
       return !(m.uuid === uuid && m.groupId === targetGroupId);
     });
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected", "actionBar"]);
   }
 
   static #onIncrementMonster(_event, target) {
@@ -771,14 +810,14 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         return true;
       });
     }
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected", "actionBar"]);
   }
 
   static #onCreateGroup() {
     const displayNum = this.#groups.length + 1;
     this.#groups.push({ id: this.#nextGroupNum, name: `${game.i18n.localize("DSENCOUNTER.Group")} ${displayNum}` });
     this.#nextGroupNum++;
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected"]);
   }
 
   static #onDeleteGroup(_event, target) {
@@ -791,7 +830,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     this.#groups.forEach((g, i) => {
       g.name = `${game.i18n.localize("DSENCOUNTER.Group")} ${i + 1}`;
     });
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected", "actionBar"]);
   }
 
   static #onToggleCaptain(_event, target) {
@@ -811,34 +850,45 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       }
       monster.isSquadCaptain = true;
     }
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["selected"]);
   }
 
   static #onRemoveRoleFilter(_event, target) {
     this.#roleFilters.delete(target.dataset.role);
     this.#displayLimit = 50;
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["browser"]);
+  }
+
+  static #onRemoveKeywordFilter(_event, target) {
+    this.#keywordFilters.delete(target.dataset.keyword);
+    this.#displayLimit = 50;
+    this.#debouncedRender(80, ["browser"]);
   }
 
   static #onRemoveSourceFilter(_event, target) {
     this.#sourceFilters.delete(target.dataset.source);
     game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
     this.#displayLimit = 50;
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["browser"]);
   }
 
   static async #onRefreshIndex() {
     this.#indexLoaded = false;
     this.#monsterIndex = await getCachedMonsterIndex(true);
     this.#indexLoaded = true;
-    this.#displayLimit = 50;
-    this.#debouncedRender();
+    // Rebuild option caches after index refresh
+    this.#cachedRoleOptions = getRoleOptions();
+    this.#cachedKeywordOptions = getKeywordOptions();
+    this.#cachedOrgOptions = getOrganizationOptions();
+    this.#cachedSourceOptions = getSourceOptions(this.#monsterIndex);
+    this.#displayLimit = 30;
+    this.#debouncedRender(80, ["browser"]);
   }
 
   static #onClearSearch() {
     this.#searchText = "";
     this.#displayLimit = 50;
-    this.#debouncedRender();
+    this.#debouncedRender(80, ["browser"]);
   }
 
   static async #onPreviewMonster(event, target) {
