@@ -372,7 +372,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         clearTimeout(debounce);
         debounce = setTimeout(() => {
           this.#searchText = e.target.value;
-          this.#displayLimit = 50;
+          this.#displayLimit = 30;
           this.#debouncedRender(80, ["browser"]);
         }, 250);
       });
@@ -386,7 +386,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         if (value) {
           this.#roleFilters.add(value);
           e.target.value = "";
-          this.#displayLimit = 50;
+          this.#displayLimit = 30;
           this.#debouncedRender(80, ["browser"]);
         }
       });
@@ -400,7 +400,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
         if (value) {
           this.#keywordFilters.add(value);
           e.target.value = "";
-          this.#displayLimit = 50;
+          this.#displayLimit = 30;
           this.#debouncedRender(80, ["browser"]);
         }
       });
@@ -409,7 +409,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     // Organization dropdown
     html.querySelector('[name="orgFilter"]')?.addEventListener("change", (e) => {
       this.#orgFilter = e.target.value;
-      this.#displayLimit = 50;
+      this.#displayLimit = 30;
       this.#debouncedRender(80, ["browser"]);
     });
 
@@ -422,7 +422,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
           this.#sourceFilters.add(value);
           game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
           e.target.value = "";
-          this.#displayLimit = 50;
+          this.#displayLimit = 30;
           this.#debouncedRender(80, ["browser"]);
         }
       });
@@ -431,14 +431,14 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     // Level filter dropdown
     html.querySelector('[name="levelFilter"]')?.addEventListener("change", (e) => {
       this.#levelFilter = Number(e.target.value) || 0;
-      this.#displayLimit = 50;
+      this.#displayLimit = 30;
       this.#debouncedRender(80, ["browser"]);
     });
 
     // Sort dropdown
     html.querySelector('[name="sortOrder"]')?.addEventListener("change", (e) => {
       this.#sortOrder = e.target.value;
-      this.#displayLimit = 50;
+      this.#displayLimit = 30;
       this.#debouncedRender(80, ["browser"]);
     });
 
@@ -453,7 +453,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
           if (this.#displayLimit < this.#lastFilteredMonsters.length) {
             scrollCooldown = true;
             const oldLimit = this.#displayLimit;
-            this.#displayLimit = Math.min(oldLimit + 50, this.#lastFilteredMonsters.length);
+            this.#displayLimit = Math.min(oldLimit + 30, this.#lastFilteredMonsters.length);
             const newMonsters = this.#lastFilteredMonsters.slice(oldLimit, this.#displayLimit);
             this.#appendBrowserRows(browserList, newMonsters);
             setTimeout(() => { scrollCooldown = false; }, 300);
@@ -855,20 +855,20 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   static #onRemoveRoleFilter(_event, target) {
     this.#roleFilters.delete(target.dataset.role);
-    this.#displayLimit = 50;
+    this.#displayLimit = 30;
     this.#debouncedRender(80, ["browser"]);
   }
 
   static #onRemoveKeywordFilter(_event, target) {
     this.#keywordFilters.delete(target.dataset.keyword);
-    this.#displayLimit = 50;
+    this.#displayLimit = 30;
     this.#debouncedRender(80, ["browser"]);
   }
 
   static #onRemoveSourceFilter(_event, target) {
     this.#sourceFilters.delete(target.dataset.source);
     game.settings.set(MODULE_ID, "sourceFilters", JSON.stringify([...this.#sourceFilters]));
-    this.#displayLimit = 50;
+    this.#displayLimit = 30;
     this.#debouncedRender(80, ["browser"]);
   }
 
@@ -887,7 +887,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
 
   static #onClearSearch() {
     this.#searchText = "";
-    this.#displayLimit = 50;
+    this.#displayLimit = 30;
     this.#debouncedRender(80, ["browser"]);
   }
 
