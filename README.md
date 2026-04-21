@@ -1,6 +1,7 @@
 # Draw Steel - Encounter Builder
 
 [![Downloads](https://img.shields.io/github/downloads/OmerCora/draw-steel-encounter-builder/total?label=Downloads&color=4aa94a)](https://github.com/OmerCora/draw-steel-encounter-builder/releases)
+[![Latest Version Downloads](https://img.shields.io/github/downloads/OmerCora/draw-steel-encounter-builder/latest/total?label=Latest%20Version&color=4aa94a)](https://github.com/OmerCora/draw-steel-encounter-builder/releases/latest)
 [![Foundry Installs](https://img.shields.io/endpoint?url=https://foundryshields.com/installs?packageName=draw-steel-encounter-builder)](https://foundryvtt.com/packages/draw-steel-encounter-builder)
 
 A Foundry VTT module for the [Draw Steel](https://mcdmproductions.com) system that provides Directors with an interactive tool to build balanced encounters using the official encounter building rules from *Draw Steel: Monsters*.
