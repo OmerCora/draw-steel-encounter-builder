@@ -6,7 +6,7 @@
 import { MODULE_ID, SYSTEM_ID } from "./config.mjs";
 import { EncounterBuilderApp } from "./encounter/encounter-app.mjs";
 import { HomebrewApp } from "./homebrew/homebrew-app.mjs";
-import { preloadMonsterIndex } from "./encounter/monster-browser.mjs";
+import { invalidateMonsterIndex, preloadMonsterIndex } from "./encounter/monster-browser.mjs";
 
 const log = (...args) => console.log(`${MODULE_ID} |`, ...args);
 
@@ -41,6 +41,35 @@ Hooks.once("init", () => {
     config: false,
     type: String,
     default: "",
+  });
+
+  game.settings.register(MODULE_ID, "allowPlayerHomebrewBuilder", {
+    name: "DSENCOUNTER.Settings.AllowPlayerHomebrewBuilder.Name",
+    hint: "DSENCOUNTER.Settings.AllowPlayerHomebrewBuilder.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange: () => {
+      ui.controls?.render(true);
+    },
+  });
+
+  game.settings.register(MODULE_ID, "monsterBrowserImageMode", {
+    name: "DSENCOUNTER.Settings.MonsterBrowserImageMode.Name",
+    hint: "DSENCOUNTER.Settings.MonsterBrowserImageMode.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      portrait: "DSENCOUNTER.Settings.MonsterBrowserImageMode.ChoicePortrait",
+      token: "DSENCOUNTER.Settings.MonsterBrowserImageMode.ChoiceToken",
+    },
+    default: "portrait",
+    onChange: () => {
+      invalidateMonsterIndex();
+      EncounterBuilderApp.refreshOpenInstance();
+    },
   });
 
   // Load templates
@@ -100,18 +129,29 @@ Hooks.once("ready", () => {
 
 Hooks.on("getSceneControlButtons", (controls) => {
   if (!_systemValid) return;
-  if (!game.user.isGM) return; // GM-only tool
 
   const tokenGroup = controls.tokens ?? controls.token;
   if (!tokenGroup) return;
 
-  tokenGroup.tools.dsencounter = {
-    name: "dsencounter",
-    title: game.i18n.localize("DSENCOUNTER.SidebarButton"),
-    icon: "fa-solid fa-swords",
-    button: true,
-    onChange: () => EncounterBuilderApp.toggle(),
-  };
+  if (game.user.isGM) {
+    tokenGroup.tools.dsencounter = {
+      name: "dsencounter",
+      title: game.i18n.localize("DSENCOUNTER.SidebarButton"),
+      icon: "fa-solid fa-swords",
+      button: true,
+      onChange: () => EncounterBuilderApp.toggle(),
+    };
+  }
+
+  if (!game.user.isGM && game.settings.get(MODULE_ID, "allowPlayerHomebrewBuilder")) {
+    tokenGroup.tools.dshomebrew = {
+      name: "dshomebrew",
+      title: game.i18n.localize("DSENCOUNTER.Homebrew.WindowTitle"),
+      icon: "fa-solid fa-hammer",
+      button: true,
+      onChange: () => HomebrewApp.toggle(),
+    };
+  }
 });
 
 // ── Canvas drop handler: reuse or import actors into folder ──────────────────

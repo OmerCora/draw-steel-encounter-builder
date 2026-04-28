@@ -3,7 +3,7 @@
  * Loads NPC actors from all draw-steel packs and the world actor list.
  */
 
-import { SYSTEM_ID } from "../config.mjs";
+import { MODULE_ID, SYSTEM_ID } from "../config.mjs";
 
 /**
  * @typedef {Object} MonsterEntry
@@ -33,7 +33,67 @@ const INDEX_FIELDS = [
   "system.monster.organization",
   "system.monster.keywords",
   "img",
+  "prototypeToken.texture.src",
 ];
+
+function getBrowserImageMode() {
+  return game.settings.get(MODULE_ID, "monsterBrowserImageMode") || "portrait";
+}
+
+/**
+ * Fetch the compendiumArtMappings from all active modules and return a
+ * single docId → { actor, token } lookup. Modules declare a `mapping` path
+ * in their flags (e.g. draw-steel-monsters' image-mapping.json) that contains
+ * the art overrides keyed by compendium document ID.
+ * @returns {Promise<Map<string, {actor?: string, token?: object}>>}
+ */
+async function buildCompendiumArtLookup() {
+  const lookup = new Map();
+  for (const mod of game.modules.values()) {
+    if (!mod.active) continue;
+    const mappings = mod.flags?.compendiumArtMappings;
+    if (!mappings) continue;
+    for (const packageMapping of Object.values(mappings)) {
+      const mappingPath = packageMapping?.mapping;
+      if (!mappingPath) continue;
+      try {
+        const resp = await fetch(mappingPath);
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        // image-mapping.json structure: { packId: { docId: artInfo } }
+        for (const packEntries of Object.values(data)) {
+          if (typeof packEntries !== "object" || packEntries === null) continue;
+          for (const [docId, artInfo] of Object.entries(packEntries)) {
+            lookup.set(docId, artInfo);
+          }
+        }
+      } catch (e) {
+        console.warn(`draw-steel-encounter-builder | Failed to load art mapping: ${mappingPath}`, e);
+      }
+    }
+  }
+  return lookup;
+}
+
+function getIndexedImage(entry, artLookup = null) {
+  const art = artLookup?.get(entry._id);
+  // art.actor = portrait path, art.token.texture.src = token path (draw-steel-monsters format)
+  const portraitImg = art?.actor || entry.img;
+  const tokenImg = art?.token?.texture?.src || entry.prototypeToken?.texture?.src;
+  const fallback = "icons/svg/mystery-man.svg";
+  return getBrowserImageMode() === "token"
+    ? tokenImg || portraitImg || fallback
+    : portraitImg || tokenImg || fallback;
+}
+
+function getActorImage(actor) {
+  const tokenImg = actor.prototypeToken?.texture?.src;
+  const portraitImg = actor.img;
+  const fallback = "icons/svg/mystery-man.svg";
+  return getBrowserImageMode() === "token"
+    ? tokenImg || portraitImg || fallback
+    : portraitImg || tokenImg || fallback;
+}
 
 /**
  * Build a lightweight monster index from all available compendium packs and world actors.
@@ -44,6 +104,9 @@ export async function loadMonsterIndex() {
 
   const roles = ds.CONFIG.monsters.roles;
   const organizations = ds.CONFIG.monsters.organizations;
+
+  // Build a compendium art lookup once so all packs benefit from module art overrides.
+  const artLookup = await buildCompendiumArtLookup();
 
   // ── Compendium packs (parallel) ──────────────────────────────────────────
   const actorPacks = game.packs.filter(pack => {
@@ -73,7 +136,7 @@ export async function loadMonsterIndex() {
         packEntries.push({
           uuid: `Compendium.${meta.id}.Actor.${entry._id}`,
           name: entry.name,
-          img: entry.img || "icons/svg/mystery-man.svg",
+          img: getIndexedImage(entry, artLookup),
           level: monster.level ?? 0,
           ev: entry.system?.ev ?? monster.ev ?? 0,
           role,
@@ -108,7 +171,7 @@ export async function loadMonsterIndex() {
     entries.push({
       uuid: actor.uuid,
       name: actor.name,
-      img: actor.img || "icons/svg/mystery-man.svg",
+      img: getActorImage(actor),
       level: monster.level ?? 0,
       ev: actor.system?.ev ?? monster.ev ?? 0,
       role,
@@ -148,6 +211,10 @@ export function getCachedMonsterIndex(force = false) {
  */
 export function preloadMonsterIndex() {
   getCachedMonsterIndex();
+}
+
+export function invalidateMonsterIndex() {
+  _indexPromise = null;
 }
 
 /**

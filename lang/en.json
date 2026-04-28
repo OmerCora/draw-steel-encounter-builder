@@ -2,6 +2,18 @@
   "DSENCOUNTER": {
     "WindowTitle": "Encounter Builder",
     "SidebarButton": "Encounter Builder",
+    "Settings": {
+      "AllowPlayerHomebrewBuilder": {
+        "Name": "Allow Players To Open Homebrew Builder",
+        "Hint": "If enabled, non-GM users can open the Homebrew Builder from scene controls. Players must also have Actor and Item creation permission in Foundry's Configure Permissions settings, or they will not be able to save monsters and abilities."
+      },
+      "MonsterBrowserImageMode": {
+        "Name": "Monster Browser Row Artwork",
+        "Hint": "Choose whether encounter builder monster rows use portrait artwork or token artwork. Changing this refreshes the cached monster index.",
+        "ChoicePortrait": "Portrait Artwork",
+        "ChoiceToken": "Token Artwork"
+      }
+    },
 
     "Input": {
       "HeroLevel": "Hero Level",

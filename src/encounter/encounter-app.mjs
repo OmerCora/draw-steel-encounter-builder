@@ -32,6 +32,13 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     }
   }
 
+  static refreshOpenInstance() {
+    if (!this._instance?.rendered) return;
+    this._instance.#indexLoaded = false;
+    this._instance.#displayLimit = 30;
+    this._instance.render({ force: true, parts: ["browser"] });
+  }
+
   /* -------------------------------------------------- */
 
   static DEFAULT_OPTIONS = {
@@ -63,7 +70,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
       refreshIndex: EncounterBuilderApp.#onRefreshIndex,
       clearSearch: EncounterBuilderApp.#onClearSearch,
       previewMonster: EncounterBuilderApp.#onPreviewMonster,
-      openHomebrew: EncounterBuilderApp.#onOpenHomebrew,
+      openHomebrew: EncounterBuilderApp.onOpenHomebrew,
     },
   };
 
@@ -924,7 +931,7 @@ export class EncounterBuilderApp extends foundry.applications.api.HandlebarsAppl
     }
   }
 
-  static #onOpenHomebrew() {
+  static onOpenHomebrew() {
     HomebrewApp.toggle();
   }
 }

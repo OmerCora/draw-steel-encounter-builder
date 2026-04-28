@@ -38,8 +38,8 @@ export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationM
       icon: "fa-solid fa-hammer",
     },
     actions: {
-      openMonsterWizard: HomebrewApp.#onOpenMonsterWizard,
-      openAbilityWizard: HomebrewApp.#onOpenAbilityWizard,
+      openMonsterWizard: HomebrewApp.onOpenMonsterWizard,
+      openAbilityWizard: HomebrewApp.onOpenAbilityWizard,
     },
   };
 
@@ -70,12 +70,12 @@ export class HomebrewApp extends foundry.applications.api.HandlebarsApplicationM
   /*  Actions                                           */
   /* -------------------------------------------------- */
 
-  static #onOpenMonsterWizard() {
+  static onOpenMonsterWizard() {
     this.close();
     MonsterWizardApp.open();
   }
 
-  static #onOpenAbilityWizard() {
+  static onOpenAbilityWizard() {
     this.close();
     AbilityWizardApp.open();
   }

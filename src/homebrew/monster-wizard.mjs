@@ -69,7 +69,7 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     },
     actions: {
       applySuggested: MonsterWizardApp.#onApplySuggested,
-      createMonster: MonsterWizardApp.#onCreateMonster,
+      createMonster: MonsterWizardApp.onCreateMonster,
       addImmunity: MonsterWizardApp.#onAddImmunity,
       removeImmunity: MonsterWizardApp.#onRemoveImmunity,
       addWeakness: MonsterWizardApp.#onAddWeakness,
@@ -591,7 +591,7 @@ export class MonsterWizardApp extends foundry.applications.api.HandlebarsApplica
     }
   }
 
-  static async #onCreateMonster() {
+  static async onCreateMonster() {
     // Flush any pending field value from a focused input before creating
     this.#flushFocusedInput();
 

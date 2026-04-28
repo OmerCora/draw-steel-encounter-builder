@@ -59,7 +59,7 @@ export class AbilityWizardApp extends foundry.applications.api.HandlebarsApplica
     actions: {
       addEffect: AbilityWizardApp.#onAddEffect,
       removeEffect: AbilityWizardApp.#onRemoveEffect,
-      createAbility: AbilityWizardApp.#onCreateAbility,
+      createAbility: AbilityWizardApp.onCreateAbility,
     },
   };
 
@@ -176,7 +176,7 @@ export class AbilityWizardApp extends foundry.applications.api.HandlebarsApplica
     this.render();
   }
 
-  static async #onCreateAbility() {
+  static async onCreateAbility() {
     this.#flushFocusedInput();
 
     const ability = this.#ability;

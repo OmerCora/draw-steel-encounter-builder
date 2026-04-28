@@ -2,7 +2,7 @@
   "id": "draw-steel-encounter-builder",
   "title": "Draw Steel - Encounter Builder",
   "description": "A helper for Gamemasters to build balanced encounters using the Draw Steel encounter building rules.",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "compatibility": {
     "minimum": "13",
     "verified": "14.360"
